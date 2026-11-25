@@ -1,0 +1,2644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>多目标深度学习 · Multi-Objective Deep Learning</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts: Inter, Noto Sans SC, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="onKatexReady()"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            paper: {
+              bg: '#FFFFFF',
+              card: '#F5F5F5',
+              border: '#E2E2E2',
+              ink: '#1A1A1A',
+              muted: '#555555',
+              crimson: '#A61C2E',
+              crimsonTint: '#FBF2F3',
+              cobalt: '#1E4D7B',
+              cobaltTint: '#F2F6FA',
+              forest: '#1F6B4E',
+              forestTint: '#F2F8F5',
+              ochre: '#8C5319',
+              ochreTint: '#FAF5EF',
+              plum: '#5B3766',
+              plumTint: '#F7F3F8',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #FFFFFF;
+      color: #1A1A1A;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .card-enter {
+      animation: fadeSlide 0.18s ease-out forwards;
+    }
+
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Refine KaTeX display formula alignment and horizontal scroll safety on mobile */
+    .katex-display {
+      margin: 0.4rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.25rem 0;
+    }
+
+    .katex {
+      font-size: 1.04em;
+    }
+
+    /* Subtle focus outline for keyboard navigation */
+    section:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-paper-bg text-paper-ink flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- MINIMALIST TOP HEADER                                                 -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-paper-bg/95 backdrop-blur-xs border-b border-paper-border">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="w-2.5 h-2.5 rounded-xs bg-paper-crimson shrink-0"></span>
+        <h1 id="site-title" class="text-base sm:text-lg font-bold tracking-tight text-paper-ink truncate">
+          多目标深度学习
+        </h1>
+      </div>
+
+      <!-- One-Click Global Bilingual Toggle [中文 | EN] -->
+      <div
+        role="group"
+        aria-label="Language Switcher"
+        class="inline-flex items-center rounded-lg border border-paper-border bg-paper-card p-0.5 shrink-0"
+      >
+        <button
+          id="lang-btn-zh"
+          type="button"
+          onclick="setLanguage('zh')"
+          class="px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-colors"
+        >
+          中文
+        </button>
+        <button
+          id="lang-btn-en"
+          type="button"
+          onclick="setLanguage('en')"
+          class="px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-colors"
+        >
+          EN
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN CONTENT                                                          -->
+  <!-- ===================================================================== -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10">
+
+    <!-- =================================================================== -->
+    <!-- SECTION 1: FOUNDATIONAL DEFINITIONS (Crimson #A61C2E)               -->
+    <!-- =================================================================== -->
+    <section
+      id="section-1"
+      tabindex="0"
+      aria-labelledby="sec1-title"
+      class="rounded-xl bg-paper-card border border-paper-border p-5 sm:p-7"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-paper-border">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-paper-crimson text-white font-mono text-xs font-semibold tracking-wider">
+            01
+          </span>
+          <h2 id="sec1-title" class="text-lg sm:text-xl font-bold tracking-tight text-paper-ink">
+            核心定义
+          </h2>
+        </div>
+
+        <button
+          id="sec1-mode-btn"
+          type="button"
+          onclick="toggleSection1Mode()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-paper-border bg-paper-bg hover:border-paper-crimson text-xs font-medium text-paper-ink transition-colors"
+        ></button>
+      </div>
+
+      <div id="sec1-stepper-wrap" class="mb-5">
+        <div id="sec1-stepper" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"></div>
+      </div>
+
+      <div id="sec1-content"></div>
+
+      <div id="sec1-nav-footer" class="mt-5 pt-1 flex items-center justify-between gap-3">
+        <button
+          id="sec1-prev-btn"
+          type="button"
+          onclick="stepSection1(-1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-border bg-paper-bg text-xs sm:text-sm font-medium text-paper-ink hover:border-paper-crimson disabled:opacity-35 disabled:hover:border-paper-border disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span id="sec1-prev-label">上一条</span>
+        </button>
+
+        <span id="sec1-counter" class="font-mono text-xs text-paper-muted">01 / 06</span>
+
+        <button
+          id="sec1-next-btn"
+          type="button"
+          onclick="stepSection1(1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-crimson bg-paper-crimson text-xs sm:text-sm font-medium text-white hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+        >
+          <span id="sec1-next-label">下一条</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 2: PERFORMANCE INDICATORS (Cobalt #1E4D7B)                  -->
+    <!-- =================================================================== -->
+    <section
+      id="section-2"
+      tabindex="0"
+      aria-labelledby="sec2-title"
+      class="rounded-xl bg-paper-card border border-paper-border p-5 sm:p-7"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-paper-border">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-paper-cobalt text-white font-mono text-xs font-semibold tracking-wider">
+            02
+          </span>
+          <h2 id="sec2-title" class="text-lg sm:text-xl font-bold tracking-tight text-paper-ink">
+            性能评价指标
+          </h2>
+        </div>
+
+        <button
+          id="sec2-mode-btn"
+          type="button"
+          onclick="toggleSection2Mode()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-paper-border bg-paper-bg hover:border-paper-cobalt text-xs font-medium text-paper-ink transition-colors"
+        ></button>
+      </div>
+
+      <div id="sec2-stepper-wrap" class="mb-5">
+        <div id="sec2-stepper" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
+      </div>
+
+      <div id="sec2-content"></div>
+
+      <div id="sec2-nav-footer" class="mt-5 pt-1 flex items-center justify-between gap-3">
+        <button
+          id="sec2-prev-btn"
+          type="button"
+          onclick="stepSection2(-1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-border bg-paper-bg text-xs sm:text-sm font-medium text-paper-ink hover:border-paper-cobalt disabled:opacity-35 disabled:hover:border-paper-border disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span id="sec2-prev-label">上一项</span>
+        </button>
+
+        <span id="sec2-counter" class="font-mono text-xs text-paper-muted">01 / 03</span>
+
+        <button
+          id="sec2-next-btn"
+          type="button"
+          onclick="stepSection2(1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-cobalt bg-paper-cobalt text-xs sm:text-sm font-medium text-white hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+        >
+          <span id="sec2-next-label">下一项</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 3: SCALARIZATION METHODS (Forest #1F6B4E)                   -->
+    <!-- =================================================================== -->
+    <section
+      id="section-3"
+      tabindex="0"
+      aria-labelledby="sec3-title"
+      class="rounded-xl bg-paper-card border border-paper-border p-5 sm:p-7"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-paper-border">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-paper-forest text-white font-mono text-xs font-semibold tracking-wider">
+            03
+          </span>
+          <h2 id="sec3-title" class="text-lg sm:text-xl font-bold tracking-tight text-paper-ink">
+            标量化方法
+          </h2>
+        </div>
+
+        <button
+          id="sec3-mode-btn"
+          type="button"
+          onclick="toggleSection3Mode()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-paper-border bg-paper-bg hover:border-paper-forest text-xs font-medium text-paper-ink transition-colors"
+        ></button>
+      </div>
+
+      <div id="sec3-stepper-wrap" class="mb-5">
+        <div id="sec3-stepper" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+      </div>
+
+      <div id="sec3-content"></div>
+
+      <div id="sec3-nav-footer" class="mt-5 pt-1 flex items-center justify-between gap-3">
+        <button
+          id="sec3-prev-btn"
+          type="button"
+          onclick="stepSection3(-1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-border bg-paper-bg text-xs sm:text-sm font-medium text-paper-ink hover:border-paper-forest disabled:opacity-35 disabled:hover:border-paper-border disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span id="sec3-prev-label">上一方法</span>
+        </button>
+
+        <span id="sec3-counter" class="font-mono text-xs text-paper-muted">01 / 02</span>
+
+        <button
+          id="sec3-next-btn"
+          type="button"
+          onclick="stepSection3(1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-forest bg-paper-forest text-xs sm:text-sm font-medium text-white hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+        >
+          <span id="sec3-next-label">下一方法</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 4: MULTI-OBJECTIVE OPTIMIZATION ALGORITHMS (Ochre #8C5319)  -->
+    <!-- Three Major Modules: Single, Finite Set, Infinite Set               -->
+    <!-- =================================================================== -->
+    <section
+      id="section-4"
+      tabindex="0"
+      aria-labelledby="sec4-title"
+      class="rounded-xl bg-paper-card border border-paper-border p-5 sm:p-7"
+    >
+      <!-- Section 4 Header -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-paper-border">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-paper-ochre text-white font-mono text-xs font-semibold tracking-wider">
+            04
+          </span>
+          <h2 id="sec4-title" class="text-lg sm:text-xl font-bold tracking-tight text-paper-ink">
+            多目标优化算法
+          </h2>
+        </div>
+
+        <!-- Step View / Expand All Toggle -->
+        <button
+          id="sec4-mode-btn"
+          type="button"
+          onclick="toggleSection4Mode()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-paper-border bg-paper-bg hover:border-paper-ochre text-xs font-medium text-paper-ink transition-colors"
+        ></button>
+      </div>
+
+      <!-- Three Major Module Selector Buttons (Visible in Step View) -->
+      <div id="sec4-major-wrap" class="mb-5">
+        <div id="sec4-major-tabs" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Active Major Module Container (or All Major Modules when Expanded) -->
+      <div id="sec4-content"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 5: THEORETICAL ANALYSIS (Plum #5B3766)                      -->
+    <!-- Two Panels: Convergence & Generalization                            -->
+    <!-- =================================================================== -->
+    <section
+      id="section-5"
+      tabindex="0"
+      aria-labelledby="sec5-title"
+      class="rounded-xl bg-paper-card border border-paper-border p-5 sm:p-7"
+    >
+      <!-- Section 5 Header -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-paper-border">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-paper-plum text-white font-mono text-xs font-semibold tracking-wider">
+            05
+          </span>
+          <h2 id="sec5-title" class="text-lg sm:text-xl font-bold tracking-tight text-paper-ink">
+            理论分析
+          </h2>
+        </div>
+
+        <button
+          id="sec5-mode-btn"
+          type="button"
+          onclick="toggleSection5Mode()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-paper-border bg-paper-bg hover:border-paper-plum text-xs font-medium text-paper-ink transition-colors"
+        ></button>
+      </div>
+
+      <!-- Ordered Stepper: 01 Convergence | 02 Generalization -->
+      <div id="sec5-stepper-wrap" class="mb-5">
+        <div id="sec5-stepper" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+      </div>
+
+      <!-- Active Panel Content -->
+      <div id="sec5-content"></div>
+
+      <!-- Prev / Next Navigation Footer -->
+      <div id="sec5-nav-footer" class="mt-5 pt-1 flex items-center justify-between gap-3">
+        <button
+          id="sec5-prev-btn"
+          type="button"
+          onclick="stepSection5(-1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-border bg-paper-bg text-xs sm:text-sm font-medium text-paper-ink hover:border-paper-plum disabled:opacity-35 disabled:hover:border-paper-border disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span id="sec5-prev-label">上一板块</span>
+        </button>
+
+        <span id="sec5-counter" class="font-mono text-xs text-paper-muted">01 / 02</span>
+
+        <button
+          id="sec5-next-btn"
+          type="button"
+          onclick="stepSection5(1)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-plum bg-paper-plum text-xs sm:text-sm font-medium text-white hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+        >
+          <span id="sec5-next-label">下一板块</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /**
+     * Application State
+     */
+    const state = {
+      lang: 'zh',                // 'zh' | 'en'
+      sec1Index: 0,              // 0..5
+      sec1ViewAll: false,
+      sec2Index: 0,              // 0..2
+      sec2ViewAll: false,
+      sec3Index: 0,              // 0..1
+      sec3ViewAll: false,
+      sec4MajorIndex: 0,         // 0: Single | 1: Finite Set | 2: Infinite Set
+      sec4SubIndex: [0, 0, 0],   // Sub-module index for each major module (0..1)
+      sec4ViewAll: false,
+      sec4FilterA: 'all',        // Filter for Single Solution table
+      sec4FilterB: 'all',        // Filter for Finite Set table
+      sec5Index: 0,              // 0: Convergence | 1: Generalization
+      sec5ViewAll: false,
+      lastFocusedSec: 1          // 1..5 for keyboard arrow navigation
+    };
+
+    /**
+     * Bilingual Static UI Strings
+     */
+    const UI = {
+      zh: {
+        siteTitle: '多目标深度学习',
+        sec1Title: '核心定义',
+        sec2Title: '性能评价指标',
+        sec3Title: '标量化方法',
+        sec4Title: '多目标优化算法',
+        sec5Title: '理论分析',
+        sec4Major1: '寻找单个帕累托最优解',
+        sec4Major2: '寻找有限帕累托解集',
+        sec4Major3: '寻找无限帕累托解集',
+        sec5Panel1: '收敛性 (Convergence)',
+        sec5Panel2: '泛化性 (Generalization)',
+        toViewAll: '全部展开',
+        toStepView: '逐步视图',
+        prev: '上一条',
+        next: '下一条',
+        prevMetric: '上一项',
+        nextMetric: '下一项',
+        prevMethod: '上一方法',
+        nextMethod: '下一方法',
+        prevPart: '上一模块',
+        nextPart: '下一模块',
+        prevPanel: '上一板块',
+        nextPanel: '下一板块',
+        defLabel: 'Def',
+        formalDef: '形式化定义',
+        provenResults: '已有证明结果',
+        detGradTitle: '确定性梯度（全批量）',
+        stochGradTitle: '随机梯度（小批量）',
+        higherBetter: '越大越好 ↑',
+        lowerBetter: '越小越好 ↓',
+        convDiv: '收敛性 + 多样性',
+        convOnly: '收敛性',
+        fig4StepTitle: '更新方向图示',
+        tab2StepTitle: '代表性方法汇总',
+        fig5StepTitle: '解分布图示',
+        tab3StepTitle: '代表性方法汇总',
+        fig6StepTitle: '网络结构图示',
+        tab4StepTitle: '网络结构对比汇总',
+        colMethod: '方法',
+        colType: '类别',
+        colCost: '开销',
+        colIdea: '核心思想',
+        colPref: '偏好向量',
+        colExact: '精确对齐',
+        colCoupled: '联合优化',
+        colMech: '核心机制',
+        colStruct: '网络结构',
+        colOverhead: '参数开销',
+        colScale: '可扩展性',
+        colExpress: '表达能力',
+        colRepMethods: '代表性方法',
+        colBatch: '批大小',
+        colAssump: '假设条件',
+        colComplex: '样本复杂度',
+        colCA: '有界 CA 距离',
+        colSetting: '分析视角 / 场景',
+        colBound: '已证明界 / 结论',
+        colRef: '代表性工作',
+        stochLegend: 'LS：L-光滑；GS：广义 L-光滑；BG：有界梯度；BF：有界函数值；CA：冲突规避距离。复杂度指达到 ε-近似帕累托平稳点的样本复杂度。',
+        filterAll: '全部 (22)',
+        filterLoss: '损失平衡 (9)',
+        filterGradW: '梯度加权 (10)',
+        filterGradM: '梯度操作 (3)',
+        filterBAll: '全部 (12)',
+        filterBFixed: '固定偏好 (5)',
+        filterBAdapt: '自适应偏好 (2)',
+        filterBNone: '无偏好向量 (5)',
+        typeLoss: '损失平衡',
+        typeGradW: '梯度加权',
+        typeGradM: '梯度操作',
+        prefFixed: '固定',
+        prefAdapt: '自适应',
+        prefNone: '无',
+        costLow: '低',
+        costMed: '中',
+        costHigh: '高',
+        lvlHigh: '高',
+        lvlLow: '低',
+        lvlMed: '中',
+        lvlLowMed: '低–中',
+        lvlMedHigh: '中–高',
+        legendG: '目标梯度 g₁, g₂',
+        legendMod: '缩放 / 投影梯度',
+        legendD: '更新方向 d',
+        legendSol: '所得解',
+        legendPF: '真实帕累托前沿',
+        legendRay: '偏好向量',
+        fig6CapA: '(a) 基于超网络的方法',
+        fig6CapB: '(b) 基于偏好条件网络的方法',
+        fig6CapC: '(c) 基于模型组合的方法',
+        svgHyper: '超网络',
+        svgTarget: '目标网络',
+        svgData: '数据',
+        svgPrefIn: '偏好作为额外输入',
+        svgPrefCond: '偏好作为条件调制',
+        svgBaseNets: '基础网络'
+      },
+      en: {
+        siteTitle: 'Multi-Objective Deep Learning',
+        sec1Title: 'Foundational Definitions',
+        sec2Title: 'Performance Indicators',
+        sec3Title: 'Scalarization Methods',
+        sec4Title: 'Multi-Objective Optimization Algorithms',
+        sec5Title: 'Theoretical Analysis',
+        sec4Major1: 'Finding a Single Pareto-optimal Solution',
+        sec4Major2: 'Finding a Finite Set of Solutions',
+        sec4Major3: 'Finding an Infinite Set of Solutions',
+        sec5Panel1: 'Convergence',
+        sec5Panel2: 'Generalization',
+        toViewAll: 'Expand All',
+        toStepView: 'Step View',
+        prev: 'Previous',
+        next: 'Next',
+        prevMetric: 'Previous',
+        nextMetric: 'Next',
+        prevMethod: 'Previous',
+        nextMethod: 'Next',
+        prevPart: 'Previous',
+        nextPart: 'Next',
+        prevPanel: 'Previous',
+        nextPanel: 'Next',
+        defLabel: 'Def',
+        formalDef: 'Formal Definition',
+        provenResults: 'Proven Results',
+        detGradTitle: 'Deterministic Gradient (Full-Batch)',
+        stochGradTitle: 'Stochastic Gradient (Mini-Batch)',
+        higherBetter: 'Higher is better ↑',
+        lowerBetter: 'Lower is better ↓',
+        convDiv: 'Convergence + Diversity',
+        convOnly: 'Convergence',
+        fig4StepTitle: 'Update Direction Illustration',
+        tab2StepTitle: 'Representative Methods',
+        fig5StepTitle: 'Solution Distribution Illustration',
+        tab3StepTitle: 'Representative Methods',
+        fig6StepTitle: 'Network Structure Illustration',
+        tab4StepTitle: 'Network Structure Comparison',
+        colMethod: 'Method',
+        colType: 'Type',
+        colCost: 'Cost',
+        colIdea: 'Key Idea',
+        colPref: 'Pref.',
+        colExact: 'Exact',
+        colCoupled: 'Coupled',
+        colMech: 'Mechanism',
+        colStruct: 'Structure',
+        colOverhead: 'Param. Overhead',
+        colScale: 'Scalability',
+        colExpress: 'Expressiveness',
+        colRepMethods: 'Representative Methods',
+        colBatch: 'Batch Size',
+        colAssump: 'Assumptions',
+        colComplex: 'Complexity',
+        colCA: 'Bounded CA',
+        colSetting: 'Setting / Perspective',
+        colBound: 'Proven Bound / Result',
+        colRef: 'Reference',
+        stochLegend: 'LS / GS: L-smooth / generalized L-smooth; BG / BF: bounded gradient / function value; CA: conflict-avoidant distance. Complexity denotes sample complexity for an ε-accurate Pareto stationary point.',
+        filterAll: 'All (22)',
+        filterLoss: 'Loss balancing (9)',
+        filterGradW: 'Gradient weighting (10)',
+        filterGradM: 'Gradient manipulation (3)',
+        filterBAll: 'All (12)',
+        filterBFixed: 'Fixed Pref. (5)',
+        filterBAdapt: 'Adaptive Pref. (2)',
+        filterBNone: 'Preference-Free (5)',
+        typeLoss: 'Loss balancing',
+        typeGradW: 'Gradient weighting',
+        typeGradM: 'Gradient manipulation',
+        prefFixed: 'Fixed',
+        prefAdapt: 'Adapt.',
+        prefNone: 'None',
+        costLow: 'Low',
+        costMed: 'Medium',
+        costHigh: 'High',
+        lvlHigh: 'High',
+        lvlLow: 'Low',
+        lvlMed: 'Medium',
+        lvlLowMed: 'Low–Medium',
+        lvlMedHigh: 'Medium–High',
+        legendG: 'Objective gradients g₁, g₂',
+        legendMod: 'Scaled / projected gradients',
+        legendD: 'Update direction d',
+        legendSol: 'Obtained solutions',
+        legendPF: 'Ground truth PF',
+        legendRay: 'Preference vectors',
+        fig6CapA: '(a) Hypernetwork-based Methods',
+        fig6CapB: '(b) Preference-Conditioned Network Methods',
+        fig6CapC: '(c) Model Combination-based Methods',
+        svgHyper: 'Hypernetwork',
+        svgTarget: 'Target network',
+        svgData: 'Data',
+        svgPrefIn: 'Preference as extra input',
+        svgPrefCond: 'Preference as condition',
+        svgBaseNets: 'Base networks'
+      }
+    };
+
+    /**
+     * Section 1: Exact 6 Formal Definitions
+     */
+    const DEFINITIONS = [
+      {
+        num: '01',
+        titleZh: '（严格）帕累托支配',
+        titleEn: '(Strict) Pareto Dominance',
+        citation: 'Miettinen, 1999',
+        bodyZh: '解 $\\theta^{(a)}$ 支配另一解 $\\theta^{(b)}$（记作 $\\theta^{(a)} \\le \\theta^{(b)}$），当且仅当对所有 $i \\in [m]$ 有 $f_i(\\theta^{(a)}) \\le f_i(\\theta^{(b)})$，且至少存在一个 $i \\in [m]$ 使得 $f_i(\\theta^{(a)}) < f_i(\\theta^{(b)})$。解 $\\theta^{(a)}$ 严格支配 $\\theta^{(b)}$，当且仅当对所有 $i \\in [m]$ 有 $f_i(\\theta^{(a)}) < f_i(\\theta^{(b)})$。',
+        bodyEn: 'A solution $\\theta^{(a)}$ dominates $\\theta^{(b)}$ ($\\theta^{(a)} \\le \\theta^{(b)}$) iff $f_i(\\theta^{(a)}) \\le f_i(\\theta^{(b)})$ for all $i \\in [m]$ and $\\exists j \\in [m]$ such that $f_j(\\theta^{(a)}) < f_j(\\theta^{(b)})$. $\\theta^{(a)}$ strictly dominates $\\theta^{(b)}$ iff $f_i(\\theta^{(a)}) < f_i(\\theta^{(b)})$ for all $i \\in [m]$.',
+        formula: '$$\\theta^{(a)} \\le \\theta^{(b)} \\iff \\forall i \\in [m],\\; f_i(\\theta^{(a)}) \\le f_i(\\theta^{(b)}) \\;\\land\\; \\exists j \\in [m],\\; f_j(\\theta^{(a)}) < f_j(\\theta^{(b)})$$ $$\\text{Strict: } \\forall i \\in [m],\\; f_i(\\theta^{(a)}) < f_i(\\theta^{(b)})$$'
+      },
+      {
+        num: '02',
+        titleZh: '（弱）帕累托最优性',
+        titleEn: '(Weak) Pareto Optimality',
+        citation: 'Miettinen, 1999',
+        bodyZh: '若不存在其他解支配 $\\theta^*$，则称解 $\\theta^*$ 为帕累托最优（PO）。若不存在其他解严格支配 $\\theta^*$，则称解 $\\theta^*$ 为弱帕累托最优。',
+        bodyEn: 'A solution $\\theta^*$ is Pareto-optimal (PO) if no other solution dominates it. A solution $\\theta^*$ is weakly Pareto-optimal if no other solution strictly dominates it.',
+        formula: '$$\\text{PO: } \\nexists\\, \\theta \\in \\mathcal{K},\\; \\theta \\le \\theta^* \\qquad\\qquad \\text{Weak PO: } \\nexists\\, \\theta \\in \\mathcal{K},\\; \\forall i \\in [m],\\, f_i(\\theta) < f_i(\\theta^*)$$'
+      },
+      {
+        num: '03',
+        titleZh: '帕累托解集与帕累托前沿',
+        titleEn: 'Pareto Set (PS) & Pareto Front (PF)',
+        citation: 'Miettinen, 1999',
+        bodyZh: '帕累托解集（PS）是所有帕累托最优解的集合；帕累托前沿（PF）是所有帕累托最优解对应的目标函数值的集合。',
+        bodyEn: 'A Pareto set (PS) is the set of all Pareto-optimal solutions. A Pareto front (PF) is the set of all objective function values of the Pareto-optimal solutions.',
+        formula: '$$\\mathcal{PS} = \\{ \\theta^* \\in \\mathcal{K} \\mid \\theta^* \\text{ is Pareto-optimal} \\}, \\qquad \\mathcal{PF} = \\{ f(\\theta^*) \\mid \\theta^* \\in \\mathcal{PS} \\}$$'
+      },
+      {
+        num: '04',
+        titleZh: '偏好向量',
+        titleEn: 'Preference Vector',
+        citation: '',
+        bodyZh: '$\\alpha$ 表示偏好向量，其各分量表示对特定目标的偏好程度。$\\alpha$ 约束在单纯形 $\\Delta_{m-1}$ 上，以保证偏好非负且归一化。',
+        bodyEn: '$\\alpha$ denotes a preference vector whose entries represent the relative preference of each objective, constrained on the simplex $\\Delta_{m-1}$ to remain nonnegative and normalized.',
+        formula: '$$\\alpha = [\\alpha_1, \\dots, \\alpha_m]^\\top \\in \\Delta_{m-1} = \\left\\{ \\alpha \\in \\mathbb{R}_+^m \\;\\middle|\\; \\sum_{i=1}^m \\alpha_i = 1,\\; \\alpha_i \\ge 0,\\; i \\in [m] \\right\\}$$'
+      },
+      {
+        num: '05',
+        titleZh: '帕累托平稳性',
+        titleEn: 'Pareto Stationarity',
+        citation: 'Désidéri, 2012',
+        bodyZh: '若存在向量 $\\lambda \\in \\Delta_{m-1}$ 使得各目标梯度的凸组合范数为零，则称解 $\\theta^*$ 为帕累托平稳解。这是帕累托最优的必要条件；当所有目标均为凸函数且 $\\forall i, \\lambda_i > 0$ 时，也是 KKT 充要条件。',
+        bodyEn: 'A solution $\\theta^*$ is Pareto stationary if there exists $\\lambda \\in \\Delta_{m-1}$ such that the norm of the convex combination of objective gradients is zero. It is a necessary condition for Pareto optimality, and a KKT sufficient and necessary condition when all objectives are convex with $\\lambda_i > 0$.',
+        formula: '$$\\exists\\, \\lambda \\in \\Delta_{m-1} \\quad \\text{s.t.} \\quad \\left\\| \\sum_{i=1}^m \\lambda_i \\nabla f_i(\\theta^*) \\right\\| = 0$$'
+      },
+      {
+        num: '06',
+        titleZh: '超体积指标',
+        titleEn: 'Hypervolume Indicator (HV)',
+        citation: 'Zitzler & Thiele, 1998',
+        bodyZh: '给定解集 $\\mathbb{S} = \\{q^{(1)}, \\dots, q^{(N)}\\}$ 与参考点 $r$，超体积指标定义为被 $\\mathbb{S}$ 支配且以 $r$ 为界的区域的勒贝格测度 $\\Lambda(\\cdot)$。',
+        bodyEn: 'Given a solution set $\\mathbb{S} = \\{q^{(1)}, \\dots, q^{(N)}\\}$ and a reference point $r$, the hypervolume indicator is the Lebesgue measure $\\Lambda(\\cdot)$ of the region dominated by $\\mathbb{S}$ and bounded by $r$.',
+        formula: '$$HV_r(\\mathbb{S}) = \\Lambda\\big(\\{ p \\mid \\exists\\, q \\in \\mathbb{S} : q \\le p \\le r \\}\\big)$$'
+      }
+    ];
+
+    /**
+     * Section 2: Exact 3 Performance Indicators
+     */
+    const INDICATORS = [
+      {
+        num: '01',
+        code: 'HV',
+        titleZh: '超体积指标',
+        titleEn: 'Hypervolume Indicator',
+        citation: 'Zitzler & Thiele, 1998',
+        direction: 'up',
+        scope: 'convDiv',
+        bodyZh: '给定目标向量集合 $\\mathbb{S} = \\{q^{(1)}, \\dots, q^{(N)}\\}$ 与参考点 $r$，通过勒贝格测度 $\\Lambda(\\cdot)$ 同时评估解集的收敛性与多样性：',
+        bodyEn: 'Given an obtained objective set $\\mathbb{S} = \\{q^{(1)}, \\dots, q^{(N)}\\}$ and reference point $r$, provides a unary measure of both convergence and diversity via Lebesgue measure $\\Lambda(\\cdot)$:',
+        formula: '$$HV_r(\\mathbb{S}) = \\Lambda\\big(\\{ p \\mid \\exists\\, q \\in \\mathbb{S} : q \\le p \\le r \\}\\big)$$'
+      },
+      {
+        num: '02',
+        code: 'GD',
+        titleZh: '世代距离',
+        titleEn: 'Generational Distance',
+        citation: 'Van Veldhuizen & Lamont, 1999',
+        direction: 'down',
+        scope: 'convOnly',
+        bodyZh: '计算所获解集 $\\mathbb{S}$ 中每个点到真实帕累托前沿 $\\mathcal{P}^*$ 上最近点的平均欧氏距离，衡量解集的收敛性：',
+        bodyEn: 'Measures the convergence of the obtained solution set $\\mathbb{S}$ by calculating the average Euclidean distance from each point in $\\mathbb{S}$ to the nearest point on the true Pareto front $\\mathcal{P}^*$: ',
+        formula: '$$\\text{GD}(\\mathbb{S}, \\mathcal{P}^*) = \\frac{1}{|\\mathbb{S}|} \\sum_{q \\in \\mathbb{S}} \\min_{p \\in \\mathcal{P}^*} \\| q - p \\|_2$$'
+      },
+      {
+        num: '03',
+        code: 'IGD',
+        titleZh: '反转世代距离',
+        titleEn: 'Inverted Generational Distance',
+        citation: 'Zitzler et al., 2003',
+        direction: 'down',
+        scope: 'convDiv',
+        bodyZh: '计算真实帕累托前沿 $\\mathcal{P}^*$ 上每个点到所获解集 $\\mathbb{S}$ 中最近点的平均欧氏距离，同时评估收敛性与多样性：',
+        bodyEn: 'Measures the average Euclidean distance from each point on the true Pareto front $\\mathcal{P}^*$ to the nearest point in the obtained solution set $\\mathbb{S}$, assessing both convergence and diversity simultaneously:',
+        formula: '$$\\text{IGD}(\\mathbb{S}, \\mathcal{P}^*) = \\frac{1}{|\\mathcal{P}^*|} \\sum_{p \\in \\mathcal{P}^*} \\min_{q \\in \\mathbb{S}} \\| p - q \\|_2$$'
+      }
+    ];
+
+    /**
+     * Section 3: Exact 2 Scalarization Methods
+     */
+    const SCALARIZATIONS = [
+      {
+        num: '01',
+        code: 'LS',
+        titleZh: '线性标量化 (LS)',
+        titleEn: 'Linear Scalarization (LS)',
+        citation: '',
+        defLabelZh: '形式化定义',
+        defLabelEn: 'Formal Definition',
+        defZh: '给定偏好向量 $\\alpha \\in \\Delta_{m-1}$，将多目标优化问题转化为加权单目标优化问题：',
+        defEn: 'Reformulates the MOO problem as a single-objective optimization problem weighted by the preference vector $\\alpha \\in \\Delta_{m-1}$:',
+        formula: '$$\\min_{\\theta \\in \\mathcal{K}} g_{\\alpha}^{\\text{LS}}(\\theta) := \\sum_{i=1}^{m} \\alpha_i f_i(\\theta)$$',
+        limLabelZh: '理论局限性',
+        limLabelEn: 'Theoretical Limitation',
+        limZh: '仅能识别帕累托前沿（PF）凸部分上的解；对于凹形 PF，线性标量化仅能找到 PF 的端点。',
+        limEn: 'Can only identify solutions on the convex part of the PF; for PFs with a concave shape, LS only finds the endpoints of the PF.'
+      },
+      {
+        num: '02',
+        code: 'Tche',
+        titleZh: '切比雪夫标量化',
+        titleEn: 'Tchebycheff Scalarization',
+        citation: 'Bowman Jr, 1976; Steuer & Choo, 1983',
+        defLabelZh: '形式化定义',
+        defLabelEn: 'Formal Definition',
+        defZh: '给定偏好向量 $\\alpha \\in \\Delta_{m-1}$ 与参考点 $z^* = [z_1^*, \\dots, z_m^*]^\\top$（通常取各目标理想值），将多目标问题转化为极小化最大加权偏差问题：',
+        defEn: 'Given a preference vector $\\alpha \\in \\Delta_{m-1}$ and reference values $z^* = [z_1^*, \\dots, z_m^*]^\\top$ (typically set to the ideal values of each objective), converts the MOO problem into:',
+        formula: '$$\\min_{\\theta \\in \\mathcal{K}} g_{\\alpha}^{\\text{Tche}}(\\theta) := \\max_{i \\in [m]} \\alpha_i \\big(f_i(\\theta) - z_i^*\\big)$$',
+        limLabelZh: '优化局限性',
+        limLabelEn: 'Optimization Limitation',
+        limZh: '由于 $\\max(\\cdot)$ 算子的非光滑性，即使所有目标函数 $\\{f_i\\}_{i=1}^m$ 均可微，目标函数 $g_\\alpha^{\\text{Tche}}(\\theta)$ 仍不可微，导致较慢的收敛速率 $\\mathcal{O}(1/\\epsilon^2)$（$\\epsilon$ 为误差容限，Lin et al., 2024b）。',
+        limEn: 'Due to the nonsmoothness of the $\\max(\\cdot)$ operator, $g_\\alpha^{\\text{Tche}}(\\theta)$ remains non-differentiable even when all $\\{f_i\\}_{i=1}^m$ are differentiable, resulting in a slow convergence rate of $\\mathcal{O}(1/\\epsilon^2)$, where $\\epsilon$ is the error tolerance (Lin et al., 2024b).'
+      }
+    ];
+
+    /**
+     * Section 4 · Module 1: Single Solution Representative Methods (22 methods)
+     */
+    const TABLE2_METHODS = [
+      { name: 'DWA', cite: 'Liu et al., 2019b', cat: 'loss', cost: 'Low', ideaZh: '基于损失下降速率计算权重', ideaEn: 'Weights from the rate of loss decrease' },
+      { name: 'UW', cite: 'Kendall et al., 2018', cat: 'loss', cost: 'Low', ideaZh: '同方差不确定性加权', ideaEn: 'Homoscedastic-uncertainty weighting' },
+      { name: 'IMTL-L', cite: 'Liu et al., 2021b', cat: 'loss', cost: 'Low', ideaZh: '强制各目标具有相同损失尺度', ideaEn: 'Enforces equal loss scale' },
+      { name: 'Log-transform', cite: 'Lin et al., 2026', cat: 'loss', cost: 'Low', ideaZh: '对数损失尺度变换', ideaEn: 'Logarithmic loss scaling' },
+      { name: 'RW', cite: 'Lin et al., 2022a', cat: 'loss', cost: 'Low', ideaZh: '随机采样目标权重', ideaEn: 'Random objective weights' },
+      { name: 'STCH', cite: 'Lin et al., 2024b', cat: 'loss', cost: 'Low', ideaZh: '平滑切比雪夫标量化', ideaEn: 'Smooth Tchebycheff scalarization' },
+      { name: 'MOML', cite: 'Ye et al., 2021; 2024c', cat: 'loss', cost: 'Medium', ideaZh: '基于验证损失的双层优化加权（多目标）', ideaEn: 'Bi-level weighting via validation loss (multi-objective)' },
+      { name: 'Auto-$\\lambda$', cite: 'Liu et al., 2022', cat: 'loss', cost: 'Medium', ideaZh: '基于验证损失的双层优化加权（标量化）', ideaEn: 'Bi-level weighting via validation loss (scalarized)' },
+      { name: 'FORUM', cite: 'Ye et al., 2024b', cat: 'loss', cost: 'Medium', ideaZh: '一阶双层优化加权', ideaEn: 'First-order bi-level weighting' },
+      { name: 'MGDA', cite: 'Sener & Koltun, 2018', cat: 'grad_weight', cost: 'High', ideaZh: '最小范数共同下降方向', ideaEn: 'Minimum-norm common descent direction' },
+      { name: 'CAGrad', cite: 'Liu et al., 2021a', cat: 'grad_weight', cost: 'High', ideaZh: '平均梯度邻域内的冲突规避方向', ideaEn: 'Conflict-averse direction near the average gradient' },
+      { name: 'Nash-MTL', cite: 'Navon et al., 2022', cat: 'grad_weight', cost: 'High', ideaZh: '讨价还价博弈加权', ideaEn: 'Bargaining-game weighting' },
+      { name: 'FairGrad', cite: 'Ban & Ji, 2024', cat: 'grad_weight', cost: 'High', ideaZh: '公平性驱动的权重分配', ideaEn: 'Fairness-driven weight allocation' },
+      { name: 'UPGrad', cite: 'Quinton & Rey, 2024', cat: 'grad_weight', cost: 'High', ideaZh: '基于投影的更新方向', ideaEn: 'Projection-based update direction' },
+      { name: 'IMTL-G', cite: 'Liu et al., 2021b', cat: 'grad_weight', cost: 'High', ideaZh: '各目标梯度上的等投影方向', ideaEn: 'Equal gradient projections' },
+      { name: 'Aligned-MTL', cite: 'Senushkin et al., 2023', cat: 'grad_weight', cost: 'High', ideaZh: '最小化梯度矩阵的条件数', ideaEn: 'Minimizes the gradient condition number' },
+      { name: 'GradNorm', cite: 'Chen et al., 2018', cat: 'grad_weight', cost: 'High', ideaZh: '均衡缩放后的梯度范数', ideaEn: 'Equalizes scaled gradient norms' },
+      { name: 'DB-MTL', cite: 'Lin et al., 2026', cat: 'grad_weight', cost: 'High', ideaZh: '强制各目标梯度范数相等', ideaEn: 'Equal gradient norms' },
+      { name: 'FAMO', cite: 'Liu et al., 2023', cat: 'grad_weight', cost: 'Low', ideaZh: '基于损失变化的 MGDA 近似', ideaEn: 'Loss-based approximation of MGDA' },
+      { name: 'PCGrad', cite: 'Yu et al., 2020', cat: 'grad_manip', cost: 'High', ideaZh: '投影消除冲突梯度分量', ideaEn: 'Projects out conflicting gradient components' },
+      { name: 'GradVac', cite: 'Wang et al., 2021c', cat: 'grad_manip', cost: 'High', ideaZh: '自适应梯度投影', ideaEn: 'Adaptive gradient projection' },
+      { name: 'GradDrop', cite: 'Chen et al., 2020', cat: 'grad_manip', cost: 'High', ideaZh: '基于梯度符号的概率掩码', ideaEn: 'Sign-based gradient masking' }
+    ];
+
+    /**
+     * Section 4 · Module 2: Finite Set Representative Methods (12 methods)
+     */
+    const TABLE3_METHODS = [
+      { name: 'PMTL', cite: 'Lin et al., 2019a', pref: 'fixed', exact: 'no', coupled: 'no', mechZh: '扇区约束', mechEn: 'Sector constraint' },
+      { name: 'EPO', cite: 'Mahapatra & Rajan, 2020; 2021', pref: 'fixed', exact: 'yes', coupled: 'no', mechZh: '均匀性函数', mechEn: 'Uniformity function' },
+      { name: 'WC-MGDA', cite: 'Momma et al., 2022', pref: 'fixed', exact: 'yes', coupled: 'no', mechZh: '切比雪夫对偶', mechEn: 'Tchebycheff dual' },
+      { name: 'PMGDA', cite: 'Zhang et al., 2024b', pref: 'fixed', exact: 'yes', coupled: 'no', mechZh: '方向约束', mechEn: 'Direction constraint' },
+      { name: 'FERERO', cite: 'Chen et al., 2024a', pref: 'fixed', exact: 'yes', coupled: 'no', mechZh: '约束 MGDA', mechEn: 'Constrained MGDA' },
+      { name: 'GMOOAR', cite: 'Chen & Kwok, 2022', pref: 'adapt', exact: 'na', coupled: 'yes', mechZh: '超体积 / 均匀性（双层优化）', mechEn: 'HV / uniformity (bi-level)' },
+      { name: 'UMOD', cite: 'Zhang et al., 2024a', pref: 'adapt', exact: 'na', coupled: 'yes', mechZh: '最大最小距离', mechEn: 'Max-min distance' },
+      { name: 'GradHV', cite: 'Wang et al., 2017', pref: 'none', exact: 'na', coupled: 'yes', mechZh: '超体积梯度', mechEn: 'Hypervolume gradient' },
+      { name: 'MOO-SVGD', cite: 'Liu et al., 2021d', pref: 'none', exact: 'na', coupled: 'yes', mechZh: 'SVGD 粒子排斥力', mechEn: 'SVGD repulsion' },
+      { name: 'F4M', cite: 'Lin et al., 2025c', pref: 'none', exact: 'na', coupled: 'yes', mechZh: '极小极大 ($m > n$)', mechEn: 'Minimax ($m > n$)' },
+      { name: 'SoM', cite: 'Ding et al., 2024', pref: 'none', exact: 'na', coupled: 'yes', mechZh: '最小之和 ($m > n$)', mechEn: 'Sum-of-min ($m > n$)' },
+      { name: 'MosT', cite: 'Li et al., 2025', pref: 'none', exact: 'na', coupled: 'yes', mechZh: '最优传输 ($m > n$)', mechEn: 'Optimal transport ($m > n$)' }
+    ];
+
+    /**
+     * Section 4 · Module 3: Infinite Set Network Structures (3 paradigms)
+     */
+    const TABLE4_STRUCTURES = [
+      {
+        nameZh: '超网络',
+        nameEn: 'Hypernetwork',
+        accent: 'forest',
+        overhead: 'high',
+        scalability: 'low',
+        expressiveness: 'high',
+        methods: 'PHN; CPMTL; PHN-HVI; Hyper-Trans'
+      },
+      {
+        nameZh: '偏好条件网络',
+        nameEn: 'Preference-conditioned',
+        accent: 'cobalt',
+        overhead: 'low',
+        scalability: 'high',
+        expressiveness: 'low_med',
+        methods: 'COSMOS; YOTO; Raychaudhuri et al.'
+      },
+      {
+        nameZh: '模型组合',
+        nameEn: 'Model combination',
+        accent: 'ochre',
+        overhead: 'med',
+        scalability: 'med_high',
+        expressiveness: 'med_high',
+        methods: 'PaMaL; LORPMAN; Panacea; PaLoRA'
+      }
+    ];
+
+    /**
+     * Section 5 · Panel 1: Convergence Data
+     */
+    const DET_CONVERGENCE = [
+      {
+        name: 'MGDA',
+        cite: 'Fliege et al., 2019; Sener & Koltun, 2018',
+        resZh: '温和条件下以 $\\mathcal{O}(K^{-1/2})$ 速率收敛至帕累托平稳点（$K$ 为迭代次数），与单目标优化收敛速率相当；共同下降方向 $d$ 保证每个目标至少获得 $\\mathcal{O}(\\|d\\|^2)$ 下降量。',
+        resEn: 'Converges to a Pareto-stationary point at rate $\\mathcal{O}(K^{-1/2})$ under mild conditions (matching single-objective optimization); common descent direction $d$ guarantees at least $\\mathcal{O}(\\|d\\|^2)$ improvement per objective.'
+      },
+      {
+        name: 'CAGrad & Nash-MTL',
+        cite: 'Liu et al., 2021a; Navon et al., 2022',
+        resZh: '在确定性全批量梯度设置下，均具备收敛至帕累托平稳点的理论保证。',
+        resEn: 'Both provide deterministic full-batch convergence guarantees to Pareto-stationary points.'
+      },
+      {
+        name: 'PCGrad',
+        cite: 'Yu et al., 2020',
+        resZh: '在特定的双任务与凸目标函数假设下给出了有限收敛性理论分析。',
+        resEn: 'Provides a limited theoretical convergence analysis under specific two-task and convex-objective assumptions.'
+      }
+    ];
+
+    const STOCH_CONVERGENCE = [
+      { name: 'SMG', cite: 'Liu & Vicente, 2021', batch: '$\\mathcal{O}(\\epsilon^{-2})$', assump: 'LS, BG', complex: '$\\mathcal{O}(\\epsilon^{-4})$', ca: false },
+      { name: 'CR-MOGM', cite: 'Zhou et al., 2022', batch: '$\\mathcal{O}(1)$', assump: 'LS, BF, BG', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: true },
+      { name: 'MoCo', cite: 'Fernando et al., 2023', batch: '$\\mathcal{O}(1)$', assump: 'LS, BF, BG', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: false },
+      { name: 'PSMGD', cite: 'Xu et al., 2025a', batch: '$\\mathcal{O}(1)$', assump: 'LS, BF, BG', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: false },
+      { name: 'MoDo', cite: 'Chen et al., 2023c', batch: '$\\mathcal{O}(1)$', assump: 'LS, BG', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: true },
+      { name: 'SDMGrad', cite: 'Xiao et al., 2023', batch: '$\\mathcal{O}(1)$', assump: 'LS, BG', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: true },
+      { name: 'SGSMGrad', cite: 'Zhang et al., 2025', batch: '$\\mathcal{O}(1)$', assump: 'GS', complex: '$\\mathcal{O}(\\epsilon^{-2})$', ca: true }
+    ];
+
+    /**
+     * Section 5 · Panel 2: Generalization Data
+     */
+    const GEN_RESULTS = [
+      {
+        settingZh: '标量化方法 · 算法无关界',
+        settingEn: 'Scalarization · Algorithm-Independent Bounds',
+        badge: 'Rademacher',
+        boundZh: '基于假设类 $\\mathcal{H}$ 的 Rademacher 复杂度，证明单目标泛化界可推广至凸组合标量化及更广义的标量化 MOO 方法（不依赖具体训练过程）。',
+        boundEn: 'Establishes algorithm-independent generalization bounds via the Rademacher complexity of $\\mathcal{H}$, showing individual-objective bounds extend to convex-combination and broader scalarization MOO methods.',
+        ref: 'Cortes et al., 2020; Súkeník & Lampert, 2024'
+      },
+      {
+        settingZh: '多分布极小极大 · 样本复杂度下界',
+        settingEn: 'Multi-Distribution Minimax · Sample Complexity Lower Bound',
+        badge: 'Lower Bound',
+        boundZh: '证明达到 $\\epsilon$-近似极小极大泛化误差的样本复杂度下界为 $\\tilde{\\Omega}\\!\\left(\\frac{v + m}{\\epsilon^2}\\right)$，其中 $v = \\text{VCdim}(\\mathcal{H})$ 为假设类 VC 维。',
+        boundEn: 'Proves a sample complexity lower bound of $\\tilde{\\Omega}\\!\\left(\\frac{v + m}{\\epsilon^2}\\right)$ to reach $\\epsilon$-accurate minimax generalization error, where $v = \\text{VCdim}(\\mathcal{H})$.',
+        ref: 'Haghtalab et al., 2022'
+      },
+      {
+        settingZh: '多分布极小极大 · 近似最优上界',
+        settingEn: 'Multi-Distribution Minimax · Near-Optimal Upper Bound',
+        badge: 'Boosting',
+        boundZh: '基于 Boosting 框架提出算法，达到近似最优样本复杂度上界 $\\tilde{\\mathcal{O}}\\!\\left(\\frac{v + m}{\\epsilon^2} \\cdot \\left(\\frac{m}{\\epsilon}\\right)^{o(1)}\\right)$。',
+        boundEn: 'Using a boosting framework, achieves a nearly optimal sample complexity upper bound of $\\tilde{\\mathcal{O}}\\!\\left(\\frac{v + m}{\\epsilon^2} \\cdot \\left(\\frac{m}{\\epsilon}\\right)^{o(1)}\\right)$.',
+        ref: 'Peng, 2024'
+      },
+      {
+        settingZh: '多分布极小极大 · 最优上界',
+        settingEn: 'Multi-Distribution Minimax · Optimal Upper Bound',
+        badge: 'ERM Oracle',
+        boundZh: '在经验风险最小化（ERM）预言机访问下提出 Hedge 变体算法，达到与下界匹配的最优样本复杂度 $\\tilde{\\mathcal{O}}\\!\\left(\\frac{v + m}{\\epsilon^2}\\right)$。',
+        boundEn: 'Proposes a Hedge algorithm variant under an Empirical Risk Minimization (ERM) oracle that achieves the optimal sample complexity bound of $\\tilde{\\mathcal{O}}\\!\\left(\\frac{v + m}{\\epsilon^2}\\right)$.',
+        ref: 'Zhang et al., 2024d'
+      },
+      {
+        settingZh: '在线学习与在线到批量转换',
+        settingEn: 'Online Setting & Online-to-Batch Conversion',
+        badge: 'Online',
+        boundZh: '自适应在线镜像下降算法达到 $\\mathcal{O}\\!\\left(\\frac{mv}{\\sqrt{K}}\\right)$ 遗憾界；经朴素在线到批量转换后得到 $\\mathcal{O}\\!\\left(\\frac{m^2 v^2}{\\epsilon^2}\\right)$ 样本复杂度（仍弱于离线最优界）。',
+        boundEn: 'Adaptive online mirror descent achieves $\\mathcal{O}\\!\\left(\\frac{mv}{\\sqrt{K}}\\right)$ regret, yielding $\\mathcal{O}\\!\\left(\\frac{m^2 v^2}{\\epsilon^2}\\right)$ sample complexity via plain online-to-batch conversion.',
+        ref: 'Liu et al., 2024b'
+      },
+      {
+        settingZh: '梯度平衡算法 · 算法相关界',
+        settingEn: 'Gradient Balancing · Algorithm-Dependent Bounds',
+        badge: 'Stability',
+        boundZh: '通过算法稳定性（algorithmic stability）视角，首次推导了梯度平衡多目标优化算法（MoDo）的算法相关泛化误差界。',
+        boundEn: 'Leverages algorithmic stability to derive algorithm-dependent generalization error bounds for gradient-balancing MOO algorithms (MoDo).',
+        ref: 'Chen et al., 2023c'
+      }
+    ];
+
+    /**
+     * Render KaTeX safely on any DOM container
+     */
+    function typesetMath(target) {
+      if (typeof window.renderMathInElement === 'function' && target) {
+        try {
+          window.renderMathInElement(target, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        } catch (err) {
+          console.error('KaTeX render error:', err);
+        }
+      }
+    }
+
+    /**
+     * Build HTML for Section 1: Definition Card
+     */
+    function buildDefinitionCardHTML(def, animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+      const title = isZh ? def.titleZh : def.titleEn;
+      const body = isZh ? def.bodyZh : def.bodyEn;
+      const citeHTML = def.citation
+        ? `<span class="font-mono text-[11px] text-paper-muted">(${def.citation})</span>`
+        : '';
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-crimson p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-crimsonTint border border-paper-crimson/25 text-paper-crimson font-mono text-xs font-semibold">
+                ${t.defLabel} ${def.num}
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${title}
+              </h3>
+            </div>
+            ${citeHTML}
+          </div>
+
+          <p class="text-sm sm:text-[15px] leading-relaxed text-paper-ink mb-4">
+            ${body}
+          </p>
+
+          <div class="rounded-lg bg-paper-card border border-paper-border px-4 py-3 text-paper-ink overflow-x-auto">
+            ${def.formula}
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 2: Performance Indicator Card
+     */
+    function buildIndicatorCardHTML(ind, animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+      const title = isZh ? ind.titleZh : ind.titleEn;
+      const body = isZh ? ind.bodyZh : ind.bodyEn;
+      const dirText = ind.direction === 'up' ? t.higherBetter : t.lowerBetter;
+      const dirCls = ind.direction === 'up'
+        ? 'bg-paper-forestTint border-paper-forest/25 text-paper-forest'
+        : 'bg-paper-crimsonTint border-paper-crimson/25 text-paper-crimson';
+      const scopeText = ind.scope === 'convDiv' ? t.convDiv : t.convOnly;
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-cobalt p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-cobaltTint border border-paper-cobalt/25 text-paper-cobalt font-mono text-xs font-semibold">
+                ${ind.num} · ${ind.code}
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${title}
+              </h3>
+              <span class="font-mono text-[11px] text-paper-muted">(${ind.citation})</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="px-2 py-0.5 rounded bg-paper-card border border-paper-border text-paper-muted text-[11px] font-medium">
+                ${scopeText}
+              </span>
+              <span class="px-2 py-0.5 rounded border font-mono text-[11px] font-semibold ${dirCls}">
+                ${dirText}
+              </span>
+            </div>
+          </div>
+
+          <p class="text-sm sm:text-[15px] leading-relaxed text-paper-ink mb-4">
+            ${body}
+          </p>
+
+          <div class="rounded-lg bg-paper-card border border-paper-border px-4 py-3 text-paper-ink overflow-x-auto">
+            ${ind.formula}
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 3: Scalarization Card (without Theorem 1)
+     */
+    function buildScalarizationCardHTML(sc, animate = true) {
+      const isZh = state.lang === 'zh';
+      const title = isZh ? sc.titleZh : sc.titleEn;
+      const defLabel = isZh ? sc.defLabelZh : sc.defLabelEn;
+      const defBody = isZh ? sc.defZh : sc.defEn;
+      const limLabel = isZh ? sc.limLabelZh : sc.limLabelEn;
+      const limBody = isZh ? sc.limZh : sc.limEn;
+      const citeHTML = sc.citation
+        ? `<span class="font-mono text-[11px] text-paper-muted">(${sc.citation})</span>`
+        : '';
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-forest p-5 sm:p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-forestTint border border-paper-forest/25 text-paper-forest font-mono text-xs font-semibold">
+                ${sc.num} · ${sc.code}
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${title}
+              </h3>
+            </div>
+            ${citeHTML}
+          </div>
+
+          <div>
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-forest mb-1.5">
+              ${defLabel}
+            </div>
+            <p class="text-sm sm:text-[15px] leading-relaxed text-paper-ink mb-3">
+              ${defBody}
+            </p>
+            <div class="rounded-lg bg-paper-card border border-paper-border px-4 py-3 text-paper-ink overflow-x-auto">
+              ${sc.formula}
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-paper-crimsonTint/70 border border-paper-crimson/20 px-4 py-3">
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-crimson mb-1">
+              ${limLabel}
+            </div>
+            <p class="text-xs sm:text-sm leading-relaxed text-paper-ink">
+              ${limBody}
+            </p>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 1 · Sub-module 01: Update Direction Illustration
+     */
+    function buildFigure4CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const arrowDefs = `
+        <defs>
+          <marker id="arr-ink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#1A1A1A" />
+          </marker>
+          <marker id="arr-crimson" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#A61C2E" />
+          </marker>
+          <marker id="arr-cobalt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#1E4D7B" />
+          </marker>
+        </defs>
+      `;
+
+      const panels = [
+        {
+          label: '(a) EW',
+          cite: '',
+          svg: `
+            <svg viewBox="0 0 196 138" class="w-full h-auto max-w-[220px]" role="img" aria-label="EW update direction">
+              ${arrowDefs}
+              <line x1="12" y1="103.5" x2="184" y2="35.7" stroke="#555555" stroke-width="1" stroke-dasharray="2.5,3" />
+              <line x1="90" y1="118" x2="26" y2="98" stroke="#1A1A1A" stroke-width="1.7" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="168" y2="42" stroke="#1A1A1A" stroke-width="1.7" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="97" y2="70" stroke="#A61C2E" stroke-width="2" marker-end="url(#arr-crimson)" />
+              <text x="15" y="106" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">1</tspan></text>
+              <text x="172" y="45" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">2</tspan></text>
+            </svg>
+          `
+        },
+        {
+          label: '(b) DWA',
+          cite: 'Liu et al., 2019b',
+          svg: `
+            <svg viewBox="0 0 196 138" class="w-full h-auto max-w-[220px]" role="img" aria-label="DWA update direction">
+              ${arrowDefs}
+              <line x1="12" y1="103.5" x2="184" y2="35.7" stroke="#555555" stroke-width="1" stroke-dasharray="2.5,3" />
+              <line x1="90" y1="118" x2="26" y2="98" stroke="#1A1A1A" stroke-width="1.5" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="168" y2="42" stroke="#1A1A1A" stroke-width="1.5" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="66" y2="110.5" stroke="#1E4D7B" stroke-width="2" marker-end="url(#arr-cobalt)" />
+              <line x1="90" y1="118" x2="146" y2="63.4" stroke="#1E4D7B" stroke-width="2" marker-end="url(#arr-cobalt)" />
+              <line x1="90" y1="118" x2="122" y2="55.9" stroke="#A61C2E" stroke-width="2" marker-end="url(#arr-crimson)" />
+              <text x="15" y="106" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">1</tspan></text>
+              <text x="172" y="45" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">2</tspan></text>
+              <text x="48" y="128" font-size="10" font-weight="600" fill="#1E4D7B">λ<tspan dy="2" font-size="7.5">1</tspan><tspan dy="-2" font-style="italic">g</tspan><tspan dy="2" font-size="7.5">1</tspan></text>
+              <text x="132" y="92" font-size="10" font-weight="600" fill="#1E4D7B">λ<tspan dy="2" font-size="7.5">2</tspan><tspan dy="-2" font-style="italic">g</tspan><tspan dy="2" font-size="7.5">2</tspan></text>
+            </svg>
+          `
+        },
+        {
+          label: '(c) MGDA',
+          cite: 'Sener & Koltun, 2018',
+          svg: `
+            <svg viewBox="0 0 196 138" class="w-full h-auto max-w-[220px]" role="img" aria-label="MGDA update direction">
+              ${arrowDefs}
+              <line x1="12" y1="103.5" x2="184" y2="35.7" stroke="#555555" stroke-width="1" stroke-dasharray="2.5,3" />
+              <line x1="90" y1="118" x2="26" y2="98" stroke="#1A1A1A" stroke-width="1.7" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="168" y2="42" stroke="#1A1A1A" stroke-width="1.7" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="74.4" y2="78.8" stroke="#A61C2E" stroke-width="2" marker-end="url(#arr-crimson)" />
+              <polyline points="68.8,81.0 71.0,86.6 76.6,84.4" fill="none" stroke="#555555" stroke-width="1" />
+              <text x="15" y="106" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">1</tspan></text>
+              <text x="172" y="45" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">2</tspan></text>
+            </svg>
+          `
+        },
+        {
+          label: '(d) PCGrad',
+          cite: 'Yu et al., 2020',
+          svg: `
+            <svg viewBox="0 0 196 138" class="w-full h-auto max-w-[220px]" role="img" aria-label="PCGrad update direction">
+              ${arrowDefs}
+              <line x1="12" y1="103.5" x2="184" y2="35.7" stroke="#555555" stroke-width="1" stroke-dasharray="2.5,3" />
+              <line x1="90" y1="118" x2="26" y2="98" stroke="#1A1A1A" stroke-width="1.5" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="168" y2="42" stroke="#1A1A1A" stroke-width="1.5" marker-end="url(#arr-ink)" />
+              <line x1="90" y1="118" x2="54" y2="62" stroke="#1E4D7B" stroke-width="1.8" marker-end="url(#arr-cobalt)" />
+              <line x1="90" y1="118" x2="112" y2="28" stroke="#1E4D7B" stroke-width="1.8" marker-end="url(#arr-cobalt)" />
+              <line x1="90" y1="118" x2="83" y2="45" stroke="#A61C2E" stroke-width="2" marker-end="url(#arr-crimson)" />
+              <text x="15" y="106" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">1</tspan></text>
+              <text x="172" y="45" font-size="11" font-weight="700" font-style="italic" fill="#1A1A1A">g<tspan dy="2" font-size="8" font-style="normal">2</tspan></text>
+              <text x="41" y="58" font-size="10.5" font-weight="700" font-style="italic" fill="#1E4D7B">ĝ<tspan dy="2" font-size="7.5" font-style="normal">1</tspan></text>
+              <text x="116" y="29" font-size="10.5" font-weight="700" font-style="italic" fill="#1E4D7B">ĝ<tspan dy="2" font-size="7.5" font-style="normal">2</tspan></text>
+            </svg>
+          `
+        }
+      ];
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                01
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.fig4StepTitle}
+              </h3>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 text-[11px] font-mono text-paper-muted">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-3.5 h-0.5 bg-paper-ink inline-block"></span>${t.legendG}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-3.5 h-0.5 bg-paper-cobalt inline-block"></span>${t.legendMod}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-3.5 h-0.5 bg-paper-crimson inline-block"></span>${t.legendD}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            ${panels.map(p => `
+              <figure class="rounded-lg border border-paper-border bg-paper-card/45 p-3 flex flex-col items-center">
+                ${p.svg}
+                <figcaption class="mt-1.5 text-[12px] font-semibold text-paper-ink text-center leading-snug">
+                  <div>${p.label}</div>
+                  ${p.cite ? `<div class="text-[10.5px] text-paper-muted font-normal">(${p.cite})</div>` : ''}
+                </figcaption>
+              </figure>
+            `).join('')}
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 1 · Sub-module 02: Single-Solution Methods Table
+     */
+    function buildTable2CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+
+      const filters = [
+        { key: 'all', label: t.filterAll },
+        { key: 'loss', label: t.filterLoss },
+        { key: 'grad_weight', label: t.filterGradW },
+        { key: 'grad_manip', label: t.filterGradM }
+      ];
+
+      const filteredRows = state.sec4FilterA === 'all'
+        ? TABLE2_METHODS
+        : TABLE2_METHODS.filter(m => m.cat === state.sec4FilterA);
+
+      const typeBadge = (cat) => {
+        if (cat === 'loss') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-forestTint border border-paper-forest/25 text-paper-forest text-[11px] font-medium whitespace-nowrap">${t.typeLoss}</span>`;
+        }
+        if (cat === 'grad_weight') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-cobaltTint border border-paper-cobalt/25 text-paper-cobalt text-[11px] font-medium whitespace-nowrap">${t.typeGradW}</span>`;
+        }
+        return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-crimsonTint border border-paper-crimson/25 text-paper-crimson text-[11px] font-medium whitespace-nowrap">${t.typeGradM}</span>`;
+      };
+
+      const costBadge = (cost) => {
+        if (cost === 'Low') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-card border border-paper-border text-paper-forest font-mono text-[11px] font-semibold">${t.costLow}</span>`;
+        }
+        if (cost === 'Medium') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-[11px] font-semibold">${t.costMed}</span>`;
+        }
+        return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-crimsonTint border border-paper-crimson/25 text-paper-crimson font-mono text-[11px] font-semibold">${t.costHigh}</span>`;
+      };
+
+      const rowsHTML = filteredRows.map(m => `
+        <tr class="border-t border-paper-border hover:bg-paper-card/60 transition-colors">
+          <td class="py-2.5 px-3.5 text-xs sm:text-[13px] font-semibold text-paper-ink whitespace-nowrap">
+            ${m.name} <span class="font-normal font-mono text-[11px] text-paper-muted">(${m.cite})</span>
+          </td>
+          <td class="py-2.5 px-3.5">${typeBadge(m.cat)}</td>
+          <td class="py-2.5 px-3.5">${costBadge(m.cost)}</td>
+          <td class="py-2.5 px-3.5 text-xs sm:text-[13px] text-paper-ink leading-snug">
+            ${isZh ? m.ideaZh : m.ideaEn}
+          </td>
+        </tr>
+      `).join('');
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                02
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.tab2StepTitle}
+              </h3>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${filters.map(f => {
+                const active = state.sec4FilterA === f.key;
+                const cls = active
+                  ? 'bg-paper-ochre text-white border-paper-ochre'
+                  : 'bg-paper-card text-paper-muted border-paper-border hover:text-paper-ink hover:border-paper-ochre/50';
+                return `
+                  <button
+                    type="button"
+                    onclick="setSec4FilterA('${f.key}')"
+                    class="px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors ${cls}"
+                  >
+                    ${f.label}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border border-paper-border">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-paper-card text-paper-muted text-[11px] font-mono uppercase tracking-wider">
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colMethod}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colType}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colCost}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colIdea}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHTML}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Helper: Build SVG subplot for Solution Distribution (Finite Set)
+     */
+    function buildDistPlotSVG(points, ariaLabel) {
+      const x0 = 32, y0 = 150, size = 136;
+      const sx = (v) => +(x0 + v * size).toFixed(2);
+      const sy = (v) => +(y0 - v * size).toFixed(2);
+
+      let pfPath = '';
+      for (let i = 0; i <= 50; i++) {
+        const f1 = i / 50;
+        const f2 = Math.pow(1 - Math.sqrt(f1), 2);
+        pfPath += (i === 0 ? 'M' : 'L') + `${sx(f1)},${sy(f2)} `;
+      }
+
+      const rayAngles = [1.8, 11.4, 21.0, 30.6, 40.2, 49.8, 59.4, 69.0, 78.6, 88.2];
+      const raysHTML = rayAngles.map(deg => {
+        const rad = (deg * Math.PI) / 180;
+        const dx = Math.cos(rad);
+        const dy = Math.sin(rad);
+        const tMax = Math.min(1 / dx, 1 / dy);
+        return `<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(dx * tMax)}" y2="${sy(dy * tMax)}" stroke="#1A1A1A" stroke-opacity="0.45" stroke-width="0.9" stroke-dasharray="3,2.5" />`;
+      }).join('');
+
+      const ticks = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+      const ticksHTML = ticks.map(v => `
+        <line x1="${sx(v)}" y1="${y0}" x2="${sx(v)}" y2="${y0 + 3}" stroke="#555555" stroke-width="0.8" />
+        <text x="${sx(v)}" y="${y0 + 11.5}" text-anchor="middle" font-size="8" fill="#555555" font-family="JetBrains Mono, monospace">${v.toFixed(1)}</text>
+        <line x1="${x0 - 3}" y1="${sy(v)}" x2="${x0}" y2="${sy(v)}" stroke="#555555" stroke-width="0.8" />
+        <text x="${x0 - 5}" y="${sy(v) + 2.8}" text-anchor="end" font-size="8" fill="#555555" font-family="JetBrains Mono, monospace">${v.toFixed(1)}</text>
+      `).join('');
+
+      const ptsHTML = points.map(([f1, f2]) => `
+        <circle cx="${sx(f1)}" cy="${sy(f2)}" r="3.4" fill="#1E4D7B" stroke="#FFFFFF" stroke-width="0.8" />
+      `).join('');
+
+      return `
+        <svg viewBox="0 0 182 178" class="w-full h-auto max-w-[205px]" role="img" aria-label="${ariaLabel}">
+          <rect x="${x0}" y="${y0 - size}" width="${size}" height="${size}" fill="#FFFFFF" stroke="#555555" stroke-width="0.9" />
+          ${raysHTML}
+          <path d="${pfPath}" fill="none" stroke="#A61C2E" stroke-width="1.35" stroke-dasharray="3.5,2" />
+          ${ptsHTML}
+          ${ticksHTML}
+          <text x="${x0 + size / 2}" y="${y0 + 23}" text-anchor="middle" font-size="9.5" font-style="italic" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">f<tspan dy="2" font-size="7" font-style="normal">1</tspan></text>
+          <text x="9" y="${y0 - size / 2}" text-anchor="middle" font-size="9.5" font-style="italic" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif" transform="rotate(-90 9 ${y0 - size / 2})">f<tspan dy="2" font-size="7" font-style="normal">2</tspan></text>
+        </svg>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 2 · Sub-module 01: Solution Distribution Illustration
+     */
+    function buildFigure5CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const pf = (f1) => Math.pow(1 - Math.sqrt(f1), 2);
+
+      const rayAngles = [1.8, 11.4, 21.0, 30.6, 40.2, 49.8, 59.4, 69.0, 78.6, 88.2];
+      const epoPoints = rayAngles.map(deg => {
+        const slope = Math.tan((deg * Math.PI) / 180);
+        const f1 = 1 / Math.pow(1 + Math.sqrt(slope), 2);
+        return [f1, slope * f1];
+      });
+
+      const plots = [
+        {
+          label: '(a) MGDA',
+          cite: 'Sener & Koltun, 2018',
+          pts: [
+            [0.112, pf(0.112)], [0.122, pf(0.122)],
+            [0.236, pf(0.236)], [0.246, pf(0.246)],
+            [0.352, pf(0.352)], [0.382, pf(0.382)],
+            [0.915, pf(0.915)], [0.938, pf(0.938)]
+          ]
+        },
+        {
+          label: '(b) PMTL',
+          cite: 'Lin et al., 2019a',
+          pts: [0.06, 0.105, 0.116, 0.155, 0.195, 0.24, 0.37, 0.455, 0.515, 0.605].map(x => [x, pf(x)])
+        },
+        {
+          label: '(c) EPO',
+          cite: 'Mahapatra & Rajan, 2020; 2021',
+          pts: epoPoints
+        },
+        {
+          label: '(d) GradHV',
+          cite: 'Wang et al., 2017',
+          pts: [0.002, 0.022, 0.065, 0.128, 0.205, 0.30, 0.41, 0.55, 0.725, 0.97].map(x => [x, pf(x)])
+        },
+        {
+          label: '(e) MOO-SVGD',
+          cite: 'Liu et al., 2021d',
+          pts: [0.158, 0.198, 0.235, 0.335, 0.388, 0.445, 0.502, 0.562, 0.625, 0.692].map(x => [x, pf(x)])
+        }
+      ];
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                01
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.fig5StepTitle}
+              </h3>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 text-[11px] font-mono text-paper-muted">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-paper-cobalt inline-block"></span>${t.legendSol}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-3.5 h-0 border-t-2 border-dashed border-paper-crimson inline-block"></span>${t.legendPF}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-3.5 h-0 border-t border-dashed border-paper-ink inline-block"></span>${t.legendRay}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            ${plots.map(p => `
+              <figure class="rounded-lg border border-paper-border bg-paper-card/45 p-2.5 flex flex-col items-center">
+                ${buildDistPlotSVG(p.pts, p.label)}
+                <figcaption class="mt-1.5 text-[11.5px] font-medium text-paper-ink text-center leading-snug">
+                  <div>${p.label}</div>
+                  <div class="text-[10.5px] text-paper-muted font-normal">(${p.cite})</div>
+                </figcaption>
+              </figure>
+            `).join('')}
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 2 · Sub-module 02: Finite-Set Methods Table
+     */
+    function buildTable3CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+
+      const filters = [
+        { key: 'all', label: t.filterBAll },
+        { key: 'fixed', label: t.filterBFixed },
+        { key: 'adapt', label: t.filterBAdapt },
+        { key: 'none', label: t.filterBNone }
+      ];
+
+      const filteredRows = state.sec4FilterB === 'all'
+        ? TABLE3_METHODS
+        : TABLE3_METHODS.filter(m => m.pref === state.sec4FilterB);
+
+      const prefBadge = (pref) => {
+        if (pref === 'fixed') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-cobaltTint border border-paper-cobalt/25 text-paper-cobalt text-[11px] font-medium whitespace-nowrap">✓ ${t.prefFixed}</span>`;
+        }
+        if (pref === 'adapt') {
+          return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre text-[11px] font-medium whitespace-nowrap">${t.prefAdapt}</span>`;
+        }
+        return `<span class="inline-flex px-2 py-0.5 rounded bg-paper-card border border-paper-border text-paper-muted text-[11px] font-medium whitespace-nowrap">✗ ${t.prefNone}</span>`;
+      };
+
+      const flagBadge = (val) => {
+        if (val === 'yes') {
+          return `<span class="inline-flex items-center justify-center w-6 h-5 rounded bg-paper-forestTint border border-paper-forest/25 text-paper-forest font-mono text-xs font-bold">✓</span>`;
+        }
+        if (val === 'no') {
+          return `<span class="inline-flex items-center justify-center w-6 h-5 rounded bg-paper-crimsonTint border border-paper-crimson/25 text-paper-crimson font-mono text-xs font-bold">✗</span>`;
+        }
+        return `<span class="font-mono text-xs text-paper-muted">—</span>`;
+      };
+
+      const rowsHTML = filteredRows.map(m => `
+        <tr class="border-t border-paper-border hover:bg-paper-card/60 transition-colors">
+          <td class="py-2.5 px-3.5 text-xs sm:text-[13px] font-semibold text-paper-ink whitespace-nowrap">
+            ${m.name} <span class="font-normal font-mono text-[11px] text-paper-muted">(${m.cite})</span>
+          </td>
+          <td class="py-2.5 px-3.5">${prefBadge(m.pref)}</td>
+          <td class="py-2.5 px-3.5 text-center">${flagBadge(m.exact)}</td>
+          <td class="py-2.5 px-3.5 text-center">${flagBadge(m.coupled)}</td>
+          <td class="py-2.5 px-3.5 text-xs sm:text-[13px] text-paper-ink leading-snug">
+            ${isZh ? m.mechZh : m.mechEn}
+          </td>
+        </tr>
+      `).join('');
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                02
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.tab3StepTitle}
+              </h3>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${filters.map(f => {
+                const active = state.sec4FilterB === f.key;
+                const cls = active
+                  ? 'bg-paper-ochre text-white border-paper-ochre'
+                  : 'bg-paper-card text-paper-muted border-paper-border hover:text-paper-ink hover:border-paper-ochre/50';
+                return `
+                  <button
+                    type="button"
+                    onclick="setSec4FilterB('${f.key}')"
+                    class="px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors ${cls}"
+                  >
+                    ${f.label}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border border-paper-border">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-paper-card text-paper-muted text-[11px] font-mono uppercase tracking-wider">
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colMethod}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colPref}</th>
+                  <th class="py-2.5 px-3.5 font-semibold text-center">${t.colExact}</th>
+                  <th class="py-2.5 px-3.5 font-semibold text-center">${t.colCoupled}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colMech}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHTML}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 3 · Sub-module 01: Infinite-Set Network Structures Illustration
+     */
+    function buildFigure6CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const arrowMarker = `
+        <defs>
+          <marker id="arr-fig6" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#1A1A1A" />
+          </marker>
+        </defs>
+      `;
+
+      const svgA = `
+        <svg viewBox="0 0 245 148" class="w-full h-auto max-w-[270px]" role="img" aria-label="Hypernetwork structure">
+          ${arrowMarker}
+          <text x="14" y="88" font-size="13" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">α</text>
+          <line x1="26" y1="84" x2="46" y2="84" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <rect x="49" y="68" width="66" height="32" rx="6" fill="#F2F8F5" stroke="#1F6B4E" stroke-width="1.6" />
+          <text x="82" y="88" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">h(α; φ)</text>
+          <text x="82" y="114" text-anchor="middle" font-size="10" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgHyper}</text>
+
+          <line x1="115" y1="84" x2="142" y2="84" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+          <text x="128" y="77" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">θ</text>
+
+          <text x="178" y="24" text-anchor="middle" font-size="10" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgData}</text>
+          <text x="178" y="38" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">x</text>
+          <line x1="178" y1="43" x2="178" y2="65" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <rect x="145" y="68" width="66" height="32" rx="6" fill="#F2F6FA" stroke="#1E4D7B" stroke-width="1.6" />
+          <text x="178" y="88" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">t(x; θ)</text>
+          <text x="178" y="114" text-anchor="middle" font-size="10" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgTarget}</text>
+
+          <line x1="211" y1="84" x2="234" y2="84" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+        </svg>
+      `;
+
+      const svgB = `
+        <svg viewBox="0 0 275 148" class="w-full h-auto max-w-[300px]" role="img" aria-label="Preference-conditioned network structure">
+          ${arrowMarker}
+          <text x="122" y="26" text-anchor="end" font-size="9.5" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgPrefIn}</text>
+          <text x="131" y="27" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">α</text>
+          <line x1="142" y1="23" x2="160" y2="23" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <text x="122" y="45" text-anchor="end" font-size="9.5" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgData}</text>
+          <text x="131" y="46" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">x</text>
+          <line x1="142" y1="42" x2="160" y2="42" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <rect x="163" y="14" width="76" height="36" rx="6" fill="#F2F6FA" stroke="#1E4D7B" stroke-width="1.6" />
+          <text x="201" y="36" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">t(x, α; θ)</text>
+          <line x1="239" y1="32" x2="262" y2="32" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <text x="122" y="83" text-anchor="end" font-size="9.5" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgPrefCond}</text>
+          <text x="131" y="84" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">α</text>
+          <line x1="142" y1="80" x2="223" y2="80" stroke="#1A1A1A" stroke-width="1.3" />
+          <line x1="179" y1="80" x2="179" y2="99" stroke="#1A1A1A" stroke-width="1.2" marker-end="url(#arr-fig6)" />
+          <line x1="201" y1="80" x2="201" y2="99" stroke="#1A1A1A" stroke-width="1.2" marker-end="url(#arr-fig6)" />
+          <line x1="223" y1="80" x2="223" y2="99" stroke="#1A1A1A" stroke-width="1.2" marker-end="url(#arr-fig6)" />
+
+          <text x="122" y="122" text-anchor="end" font-size="9.5" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgData}</text>
+          <text x="131" y="123" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">x</text>
+          <line x1="142" y1="119" x2="160" y2="119" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <rect x="163" y="102" width="76" height="34" rx="6" fill="#F2F6FA" stroke="#1E4D7B" stroke-width="1.6" />
+          <text x="201" y="123" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">t(x, α; θ)</text>
+          <line x1="239" y1="119" x2="262" y2="119" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+        </svg>
+      `;
+
+      const svgC = `
+        <svg viewBox="0 0 245 148" class="w-full h-auto max-w-[270px]" role="img" aria-label="Model combination structure">
+          ${arrowMarker}
+          <text x="14" y="80" text-anchor="middle" font-size="9.5" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif" transform="rotate(-90 14 80)">${t.svgBaseNets}</text>
+
+          <rect x="28" y="26" width="36" height="28" rx="5" fill="#FAF5EF" stroke="#8C5319" stroke-width="1.5" />
+          <text x="46" y="44" text-anchor="middle" font-size="11.5" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">θ<tspan dy="2.5" font-size="8" font-style="normal">1</tspan></text>
+
+          <rect x="28" y="66" width="36" height="28" rx="5" fill="#FAF5EF" stroke="#8C5319" stroke-width="1.5" />
+          <text x="46" y="84" text-anchor="middle" font-size="11.5" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">θ<tspan dy="2.5" font-size="8" font-style="normal">2</tspan></text>
+
+          <rect x="28" y="106" width="36" height="28" rx="5" fill="#FAF5EF" stroke="#8C5319" stroke-width="1.5" />
+          <text x="46" y="124" text-anchor="middle" font-size="11.5" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">θ<tspan dy="2.5" font-size="8" font-style="normal">3</tspan></text>
+
+          <path d="M 64 40 L 92 40 L 92 70" fill="none" stroke="#1A1A1A" stroke-width="1.3" />
+          <line x1="64" y1="80" x2="82" y2="80" stroke="#1A1A1A" stroke-width="1.3" />
+          <path d="M 64 120 L 92 120 L 92 90" fill="none" stroke="#1A1A1A" stroke-width="1.3" />
+
+          <text x="92" y="84" text-anchor="middle" font-size="12.5" font-weight="700" font-style="italic" fill="#A61C2E" font-family="Inter, sans-serif">α</text>
+
+          <line x1="101" y1="80" x2="140" y2="80" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+          <text x="120" y="73" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">θ</text>
+
+          <text x="177" y="20" text-anchor="middle" font-size="10" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgData}</text>
+          <text x="177" y="34" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="#1A1A1A" font-family="Inter, sans-serif">x</text>
+          <line x1="177" y1="39" x2="177" y2="61" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+
+          <rect x="144" y="64" width="66" height="32" rx="6" fill="#F2F6FA" stroke="#1E4D7B" stroke-width="1.6" />
+          <text x="177" y="84" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1A1A1A" font-family="Inter, sans-serif">t(x; θ)</text>
+          <text x="177" y="110" text-anchor="middle" font-size="10" fill="#555555" font-family="Inter, Noto Sans SC, sans-serif">${t.svgTarget}</text>
+
+          <line x1="210" y1="80" x2="234" y2="80" stroke="#1A1A1A" stroke-width="1.3" marker-end="url(#arr-fig6)" />
+        </svg>
+      `;
+
+      const panels = [
+        { cap: t.fig6CapA, svg: svgA },
+        { cap: t.fig6CapB, svg: svgB },
+        { cap: t.fig6CapC, svg: svgC }
+      ];
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                01
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.fig6StepTitle}
+              </h3>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+            ${panels.map(p => `
+              <figure class="rounded-lg border border-paper-border bg-paper-card/45 p-3.5 flex flex-col items-center justify-between">
+                <div class="w-full flex items-center justify-center py-1">
+                  ${p.svg}
+                </div>
+                <figcaption class="mt-2 text-xs font-semibold text-paper-ink text-center leading-snug">
+                  ${p.cap}
+                </figcaption>
+              </figure>
+            `).join('')}
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 4 · Module 3 · Sub-module 02: Network Structure Comparison Table
+     */
+    function buildTable4CardHTML(animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+
+      const levelBadge = (lvl, isOverhead = false) => {
+        const labelMap = {
+          high: t.lvlHigh,
+          low: t.lvlLow,
+          med: t.lvlMed,
+          low_med: t.lvlLowMed,
+          med_high: t.lvlMedHigh
+        };
+        let cls = 'bg-paper-card border-paper-border text-paper-ink';
+        if (isOverhead) {
+          if (lvl === 'low') cls = 'bg-paper-forestTint border-paper-forest/25 text-paper-forest';
+          else if (lvl === 'med') cls = 'bg-paper-ochreTint border-paper-ochre/25 text-paper-ochre';
+          else cls = 'bg-paper-crimsonTint border-paper-crimson/25 text-paper-crimson';
+        } else {
+          if (lvl === 'high') cls = 'bg-paper-forestTint border-paper-forest/25 text-paper-forest';
+          else if (lvl === 'med_high') cls = 'bg-paper-cobaltTint border-paper-cobalt/25 text-paper-cobalt';
+          else if (lvl === 'low_med') cls = 'bg-paper-ochreTint border-paper-ochre/25 text-paper-ochre';
+          else cls = 'bg-paper-crimsonTint border-paper-crimson/25 text-paper-crimson';
+        }
+        return `<span class="inline-flex px-2 py-0.5 rounded border font-mono text-[11px] font-semibold whitespace-nowrap ${cls}">${labelMap[lvl]}</span>`;
+      };
+
+      const structBadge = (item) => {
+        const clsMap = {
+          forest: 'bg-paper-forestTint border-paper-forest/25 text-paper-forest',
+          cobalt: 'bg-paper-cobaltTint border-paper-cobalt/25 text-paper-cobalt',
+          ochre: 'bg-paper-ochreTint border-paper-ochre/25 text-paper-ochre'
+        };
+        return `<span class="inline-flex px-2.5 py-0.5 rounded border text-xs font-semibold whitespace-nowrap ${clsMap[item.accent]}">${isZh ? item.nameZh : item.nameEn}</span>`;
+      };
+
+      const rowsHTML = TABLE4_STRUCTURES.map(s => `
+        <tr class="border-t border-paper-border hover:bg-paper-card/60 transition-colors">
+          <td class="py-3 px-3.5">${structBadge(s)}</td>
+          <td class="py-3 px-3.5 text-center">${levelBadge(s.overhead, true)}</td>
+          <td class="py-3 px-3.5 text-center">${levelBadge(s.scalability, false)}</td>
+          <td class="py-3 px-3.5 text-center">${levelBadge(s.expressiveness, false)}</td>
+          <td class="py-3 px-3.5 font-mono text-xs text-paper-ink leading-relaxed">${s.methods}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-ochre p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-ochreTint border border-paper-ochre/25 text-paper-ochre font-mono text-xs font-semibold">
+                02
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.tab4StepTitle}
+              </h3>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border border-paper-border">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-paper-card text-paper-muted text-[11px] font-mono uppercase tracking-wider">
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colStruct}</th>
+                  <th class="py-2.5 px-3.5 font-semibold text-center">${t.colOverhead}</th>
+                  <th class="py-2.5 px-3.5 font-semibold text-center">${t.colScale}</th>
+                  <th class="py-2.5 px-3.5 font-semibold text-center">${t.colExpress}</th>
+                  <th class="py-2.5 px-3.5 font-semibold">${t.colRepMethods}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHTML}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 5 · Panel 01: Convergence
+     */
+    function buildConvergenceCardHTML(animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+
+      const defText = isZh
+        ? '在非凸多目标优化中，收敛性指迭代解到达 $\\epsilon$-近似帕累托平稳点（精确平稳点对应 $\\epsilon = 0$），即梯度矩阵凸包中的最小范数不超过容限 $\\epsilon$：'
+        : 'In non-convex multi-objective optimization, convergence refers to reaching an $\\epsilon$-accurate Pareto stationary point (exact stationarity at $\\epsilon = 0$), where the minimum norm in the convex hull of objective gradients satisfies:';
+
+      const detItemsHTML = DET_CONVERGENCE.map(item => `
+        <div class="rounded-lg bg-paper-card/70 border border-paper-border p-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <span class="text-xs sm:text-[13px] font-bold text-paper-ink">${item.name}</span>
+            <span class="font-mono text-[11px] text-paper-muted">(${item.cite})</span>
+          </div>
+          <p class="text-xs sm:text-[13px] leading-relaxed text-paper-ink">
+            ${isZh ? item.resZh : item.resEn}
+          </p>
+        </div>
+      `).join('');
+
+      const caBadge = (ok) => ok
+        ? `<span class="inline-flex items-center justify-center w-6 h-5 rounded bg-paper-forestTint border border-paper-forest/25 text-paper-forest font-mono text-xs font-bold">✓</span>`
+        : `<span class="inline-flex items-center justify-center w-6 h-5 rounded bg-paper-crimsonTint border border-paper-crimson/25 text-paper-crimson font-mono text-xs font-bold">✗</span>`;
+
+      const stochRowsHTML = STOCH_CONVERGENCE.map(row => `
+        <tr class="border-t border-paper-border hover:bg-paper-card/60 transition-colors">
+          <td class="py-2.5 px-3.5 text-xs sm:text-[13px] font-semibold text-paper-ink whitespace-nowrap">
+            ${row.name} <span class="font-normal font-mono text-[11px] text-paper-muted">(${row.cite})</span>
+          </td>
+          <td class="py-2.5 px-3.5 text-center text-xs sm:text-[13px] text-paper-ink">${row.batch}</td>
+          <td class="py-2.5 px-3.5 text-center font-mono text-[11px] text-paper-muted">${row.assump}</td>
+          <td class="py-2.5 px-3.5 text-center text-xs sm:text-[13px] font-medium text-paper-ink">${row.complex}</td>
+          <td class="py-2.5 px-3.5 text-center">${caBadge(row.ca)}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-plum p-5 sm:p-6 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-plumTint border border-paper-plum/25 text-paper-plum font-mono text-xs font-semibold">
+                01
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.sec5Panel1}
+              </h3>
+            </div>
+          </div>
+
+          <!-- Formal Definition -->
+          <div>
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-plum mb-1.5">
+              ${t.formalDef}
+            </div>
+            <p class="text-sm sm:text-[15px] leading-relaxed text-paper-ink mb-3">
+              ${defText}
+            </p>
+            <div class="rounded-lg bg-paper-card border border-paper-border px-4 py-3 text-paper-ink overflow-x-auto">
+              $$\\min_{\\lambda \\in \\Delta_{m-1}} \\left\\| \\sum_{i=1}^{m} \\lambda_i \\nabla f_i(\\theta) \\right\\|^2 \\le \\epsilon$$
+            </div>
+          </div>
+
+          <!-- Proven Results -->
+          <div class="space-y-4">
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-plum">
+              ${t.provenResults}
+            </div>
+
+            <!-- Deterministic Gradient -->
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-paper-plum"></span>
+                <h4 class="text-xs sm:text-sm font-bold text-paper-ink">${t.detGradTitle}</h4>
+              </div>
+              <div class="grid grid-cols-1 gap-2.5">
+                ${detItemsHTML}
+              </div>
+            </div>
+
+            <!-- Stochastic Gradient -->
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-paper-plum"></span>
+                <h4 class="text-xs sm:text-sm font-bold text-paper-ink">${t.stochGradTitle}</h4>
+              </div>
+
+              <div class="overflow-x-auto rounded-lg border border-paper-border">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-paper-card text-paper-muted text-[11px] font-mono uppercase tracking-wider">
+                      <th class="py-2.5 px-3.5 font-semibold">${t.colMethod}</th>
+                      <th class="py-2.5 px-3.5 font-semibold text-center">${t.colBatch}</th>
+                      <th class="py-2.5 px-3.5 font-semibold text-center">${t.colAssump}</th>
+                      <th class="py-2.5 px-3.5 font-semibold text-center">${t.colComplex}</th>
+                      <th class="py-2.5 px-3.5 font-semibold text-center">${t.colCA}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${stochRowsHTML}
+                  </tbody>
+                </table>
+              </div>
+
+              <p class="text-[11px] font-mono text-paper-muted leading-relaxed">
+                ${t.stochLegend}
+              </p>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Build HTML for Section 5 · Panel 02: Generalization
+     */
+    function buildGeneralizationCardHTML(animate = true) {
+      const t = UI[state.lang];
+      const isZh = state.lang === 'zh';
+
+      const defText = isZh
+        ? '在多目标 / 多分布学习中，给定 $m$ 个数据分布 $\\{\\mathcal{D}_i\\}_{i=1}^m$ 与假设类 $\\mathcal{H}$，泛化性旨在寻找（可随机化的）假设 $h$，使其在最差分布上的期望损失与最优假设 $h^*$ 之间的差距不超过误差容限 $\\epsilon$：'
+        : 'In multi-objective / multi-distribution learning, given $m$ distributions $\\{\\mathcal{D}_i\\}_{i=1}^m$ and a hypothesis class $\\mathcal{H}$, generalization seeks a (possibly randomized) hypothesis $h$ whose worst-case expected loss is within tolerance $\\epsilon$ of the optimal hypothesis $h^*$:';
+
+      const rowsHTML = GEN_RESULTS.map(item => `
+        <tr class="border-t border-paper-border hover:bg-paper-card/60 transition-colors">
+          <td class="py-3 px-3.5 align-top whitespace-nowrap">
+            <div class="text-xs sm:text-[13px] font-semibold text-paper-ink">${isZh ? item.settingZh : item.settingEn}</div>
+            <span class="inline-flex mt-1 px-2 py-0.5 rounded bg-paper-plumTint border border-paper-plum/25 text-paper-plum font-mono text-[10.5px] font-semibold">
+              ${item.badge}
+            </span>
+          </td>
+          <td class="py-3 px-3.5 text-xs sm:text-[13px] text-paper-ink leading-relaxed">
+            ${isZh ? item.boundZh : item.boundEn}
+          </td>
+          <td class="py-3 px-3.5 align-top font-mono text-[11px] text-paper-muted whitespace-nowrap">
+            ${item.ref}
+          </td>
+        </tr>
+      `).join('');
+
+      return `
+        <article class="${animate ? 'card-enter' : ''} rounded-xl bg-paper-bg border border-paper-border border-l-4 border-l-paper-plum p-5 sm:p-6 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2 py-0.5 rounded bg-paper-plumTint border border-paper-plum/25 text-paper-plum font-mono text-xs font-semibold">
+                02
+              </span>
+              <h3 class="text-base sm:text-[17px] font-bold text-paper-ink">
+                ${t.sec5Panel2}
+              </h3>
+            </div>
+          </div>
+
+          <!-- Formal Definition -->
+          <div>
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-plum mb-1.5">
+              ${t.formalDef}
+            </div>
+            <p class="text-sm sm:text-[15px] leading-relaxed text-paper-ink mb-3">
+              ${defText}
+            </p>
+            <div class="rounded-lg bg-paper-card border border-paper-border px-4 py-3 text-paper-ink overflow-x-auto">
+              $$\\max_{i \\in [m]} l_{\\mathcal{D}_i}(h) \\le \\min_{h^* \\in \\mathcal{H}} \\max_{i \\in [m]} l_{\\mathcal{D}_i}(h^*) + \\epsilon$$
+            </div>
+          </div>
+
+          <!-- Proven Results -->
+          <div class="space-y-3">
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-paper-plum">
+              ${t.provenResults}
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border border-paper-border">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-paper-card text-paper-muted text-[11px] font-mono uppercase tracking-wider">
+                    <th class="py-2.5 px-3.5 font-semibold">${t.colSetting}</th>
+                    <th class="py-2.5 px-3.5 font-semibold">${t.colBound}</th>
+                    <th class="py-2.5 px-3.5 font-semibold">${t.colRef}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHTML}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Render Section 1
+     */
+    function renderSection1() {
+      const t = UI[state.lang];
+      document.getElementById('sec1-title').textContent = t.sec1Title;
+      document.getElementById('sec1-mode-btn').textContent = state.sec1ViewAll ? t.toStepView : t.toViewAll;
+      document.getElementById('sec1-prev-label').textContent = t.prev;
+      document.getElementById('sec1-next-label').textContent = t.next;
+
+      const stepperWrap = document.getElementById('sec1-stepper-wrap');
+      const navFooter = document.getElementById('sec1-nav-footer');
+      const contentEl = document.getElementById('sec1-content');
+
+      if (state.sec1ViewAll) {
+        stepperWrap.classList.add('hidden');
+        navFooter.classList.add('hidden');
+        contentEl.innerHTML = `<div class="space-y-4">${DEFINITIONS.map(d => buildDefinitionCardHTML(d, false)).join('')}</div>`;
+      } else {
+        stepperWrap.classList.remove('hidden');
+        navFooter.classList.remove('hidden');
+
+        const stepperEl = document.getElementById('sec1-stepper');
+        stepperEl.innerHTML = DEFINITIONS.map((def, idx) => {
+          const isActive = idx === state.sec1Index;
+          const title = state.lang === 'zh' ? def.titleZh : def.titleEn;
+
+          const cardClasses = isActive
+            ? 'bg-paper-crimsonTint border-paper-crimson text-paper-ink'
+            : 'bg-paper-bg border-paper-border text-paper-muted hover:border-paper-crimson/50 hover:text-paper-ink';
+
+          const badgeClasses = isActive
+            ? 'bg-paper-crimson text-white border-paper-crimson'
+            : 'bg-paper-card text-paper-muted border-paper-border';
+
+          return `
+            <button
+              type="button"
+              onclick="selectSection1(${idx})"
+              aria-current="${isActive ? 'step' : 'false'}"
+              class="flex flex-col items-start text-left p-3 rounded-lg border transition-colors ${cardClasses}"
+            >
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold mb-2 ${badgeClasses}">
+                ${def.num}
+              </span>
+              <span class="text-xs font-semibold leading-snug line-clamp-2">
+                ${title}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = buildDefinitionCardHTML(DEFINITIONS[state.sec1Index], true);
+
+        document.getElementById('sec1-counter').textContent = `${DEFINITIONS[state.sec1Index].num} / 0${DEFINITIONS.length}`;
+        document.getElementById('sec1-prev-btn').disabled = state.sec1Index === 0;
+        document.getElementById('sec1-next-btn').disabled = state.sec1Index === DEFINITIONS.length - 1;
+      }
+
+      typesetMath(contentEl);
+    }
+
+    /**
+     * Render Section 2
+     */
+    function renderSection2() {
+      const t = UI[state.lang];
+      document.getElementById('sec2-title').textContent = t.sec2Title;
+      document.getElementById('sec2-mode-btn').textContent = state.sec2ViewAll ? t.toStepView : t.toViewAll;
+      document.getElementById('sec2-prev-label').textContent = t.prevMetric;
+      document.getElementById('sec2-next-label').textContent = t.nextMetric;
+
+      const stepperWrap = document.getElementById('sec2-stepper-wrap');
+      const navFooter = document.getElementById('sec2-nav-footer');
+      const contentEl = document.getElementById('sec2-content');
+
+      if (state.sec2ViewAll) {
+        stepperWrap.classList.add('hidden');
+        navFooter.classList.add('hidden');
+        contentEl.innerHTML = `<div class="space-y-4">${INDICATORS.map(ind => buildIndicatorCardHTML(ind, false)).join('')}</div>`;
+      } else {
+        stepperWrap.classList.remove('hidden');
+        navFooter.classList.remove('hidden');
+
+        const stepperEl = document.getElementById('sec2-stepper');
+        stepperEl.innerHTML = INDICATORS.map((ind, idx) => {
+          const isActive = idx === state.sec2Index;
+          const title = state.lang === 'zh' ? ind.titleZh : ind.titleEn;
+
+          const cardClasses = isActive
+            ? 'bg-paper-cobaltTint border-paper-cobalt text-paper-ink'
+            : 'bg-paper-bg border-paper-border text-paper-muted hover:border-paper-cobalt/50 hover:text-paper-ink';
+
+          const badgeClasses = isActive
+            ? 'bg-paper-cobalt text-white border-paper-cobalt'
+            : 'bg-paper-card text-paper-muted border-paper-border';
+
+          return `
+            <button
+              type="button"
+              onclick="selectSection2(${idx})"
+              aria-current="${isActive ? 'step' : 'false'}"
+              class="flex items-center gap-2.5 text-left px-3.5 py-2.5 rounded-lg border transition-colors ${cardClasses}"
+            >
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold shrink-0 ${badgeClasses}">
+                ${ind.num} · ${ind.code}
+              </span>
+              <span class="text-xs sm:text-[13px] font-semibold truncate">
+                ${title}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = buildIndicatorCardHTML(INDICATORS[state.sec2Index], true);
+
+        document.getElementById('sec2-counter').textContent = `${INDICATORS[state.sec2Index].num} / 0${INDICATORS.length}`;
+        document.getElementById('sec2-prev-btn').disabled = state.sec2Index === 0;
+        document.getElementById('sec2-next-btn').disabled = state.sec2Index === INDICATORS.length - 1;
+      }
+
+      typesetMath(contentEl);
+    }
+
+    /**
+     * Render Section 3
+     */
+    function renderSection3() {
+      const t = UI[state.lang];
+      document.getElementById('sec3-title').textContent = t.sec3Title;
+      document.getElementById('sec3-mode-btn').textContent = state.sec3ViewAll ? t.toStepView : t.toViewAll;
+      document.getElementById('sec3-prev-label').textContent = t.prevMethod;
+      document.getElementById('sec3-next-label').textContent = t.nextMethod;
+
+      const stepperWrap = document.getElementById('sec3-stepper-wrap');
+      const navFooter = document.getElementById('sec3-nav-footer');
+      const contentEl = document.getElementById('sec3-content');
+
+      if (state.sec3ViewAll) {
+        stepperWrap.classList.add('hidden');
+        navFooter.classList.add('hidden');
+        contentEl.innerHTML = `<div class="space-y-4">${SCALARIZATIONS.map(sc => buildScalarizationCardHTML(sc, false)).join('')}</div>`;
+      } else {
+        stepperWrap.classList.remove('hidden');
+        navFooter.classList.remove('hidden');
+
+        const stepperEl = document.getElementById('sec3-stepper');
+        stepperEl.innerHTML = SCALARIZATIONS.map((sc, idx) => {
+          const isActive = idx === state.sec3Index;
+          const title = state.lang === 'zh' ? sc.titleZh : sc.titleEn;
+
+          const cardClasses = isActive
+            ? 'bg-paper-forestTint border-paper-forest text-paper-ink'
+            : 'bg-paper-bg border-paper-border text-paper-muted hover:border-paper-forest/50 hover:text-paper-ink';
+
+          const badgeClasses = isActive
+            ? 'bg-paper-forest text-white border-paper-forest'
+            : 'bg-paper-card text-paper-muted border-paper-border';
+
+          return `
+            <button
+              type="button"
+              onclick="selectSection3(${idx})"
+              aria-current="${isActive ? 'step' : 'false'}"
+              class="flex items-center gap-2.5 text-left px-3.5 py-2.5 rounded-lg border transition-colors ${cardClasses}"
+            >
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold shrink-0 ${badgeClasses}">
+                ${sc.num} · ${sc.code}
+              </span>
+              <span class="text-xs sm:text-[13px] font-semibold truncate">
+                ${title}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = buildScalarizationCardHTML(SCALARIZATIONS[state.sec3Index], true);
+
+        document.getElementById('sec3-counter').textContent = `${SCALARIZATIONS[state.sec3Index].num} / 0${SCALARIZATIONS.length}`;
+        document.getElementById('sec3-prev-btn').disabled = state.sec3Index === 0;
+        document.getElementById('sec3-next-btn').disabled = state.sec3Index === SCALARIZATIONS.length - 1;
+      }
+
+      typesetMath(contentEl);
+    }
+
+    /**
+     * Helper: Build a Major Module Block inside Section 4
+     */
+    function buildSec4MajorModuleHTML(majorIdx, expandedAll) {
+      const t = UI[state.lang];
+      const majorMeta = [
+        {
+          code: '4.1',
+          title: t.sec4Major1,
+          subSteps: [
+            { num: '01', title: t.fig4StepTitle },
+            { num: '02', title: t.tab2StepTitle }
+          ],
+          renderSub: (sIdx, anim) => (sIdx === 0 ? buildFigure4CardHTML(anim) : buildTable2CardHTML(anim))
+        },
+        {
+          code: '4.2',
+          title: t.sec4Major2,
+          subSteps: [
+            { num: '01', title: t.fig5StepTitle },
+            { num: '02', title: t.tab3StepTitle }
+          ],
+          renderSub: (sIdx, anim) => (sIdx === 0 ? buildFigure5CardHTML(anim) : buildTable3CardHTML(anim))
+        },
+        {
+          code: '4.3',
+          title: t.sec4Major3,
+          subSteps: [
+            { num: '01', title: t.fig6StepTitle },
+            { num: '02', title: t.tab4StepTitle }
+          ],
+          renderSub: (sIdx, anim) => (sIdx === 0 ? buildFigure6CardHTML(anim) : buildTable4CardHTML(anim))
+        }
+      ][majorIdx];
+
+      if (expandedAll) {
+        return `
+          <div class="rounded-xl bg-paper-bg/70 border border-paper-border p-4 sm:p-5 space-y-4">
+            <div class="flex items-center gap-2.5 pb-3 border-b border-paper-border">
+              <span class="px-2 py-0.5 rounded bg-paper-ochre text-white font-mono text-xs font-semibold">
+                ${majorMeta.code}
+              </span>
+              <h3 class="text-base sm:text-lg font-bold text-paper-ink">
+                ${majorMeta.title}
+              </h3>
+            </div>
+            <div class="space-y-4">
+              ${majorMeta.renderSub(0, false)}
+              ${majorMeta.renderSub(1, false)}
+            </div>
+          </div>
+        `;
+      }
+
+      const activeSub = state.sec4SubIndex[majorIdx];
+      const subButtonsHTML = majorMeta.subSteps.map((step, sIdx) => {
+        const isActive = sIdx === activeSub;
+        const cardClasses = isActive
+          ? 'bg-paper-ochreTint border-paper-ochre text-paper-ink'
+          : 'bg-paper-bg border-paper-border text-paper-muted hover:border-paper-ochre/50 hover:text-paper-ink';
+        const badgeClasses = isActive
+          ? 'bg-paper-ochre text-white border-paper-ochre'
+          : 'bg-paper-card text-paper-muted border-paper-border';
+
+        return `
+          <button
+            type="button"
+            onclick="selectSection4Sub(${majorIdx}, ${sIdx})"
+            aria-current="${isActive ? 'step' : 'false'}"
+            class="flex items-center gap-2.5 text-left px-3.5 py-2.5 rounded-lg border transition-colors ${cardClasses}"
+          >
+            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold shrink-0 ${badgeClasses}">
+              ${step.num}
+            </span>
+            <span class="text-xs sm:text-[13px] font-semibold truncate">
+              ${step.title}
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      return `
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${subButtonsHTML}
+          </div>
+
+          <div>
+            ${majorMeta.renderSub(activeSub, true)}
+          </div>
+
+          <div class="pt-1 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onclick="stepSection4Sub(-1)"
+              ${activeSub === 0 ? 'disabled' : ''}
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-border bg-paper-bg text-xs sm:text-sm font-medium text-paper-ink hover:border-paper-ochre disabled:opacity-35 disabled:hover:border-paper-border disabled:cursor-not-allowed transition-colors"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>${t.prevPart}</span>
+            </button>
+
+            <span class="font-mono text-xs text-paper-muted">
+              ${majorMeta.code} · ${majorMeta.subSteps[activeSub].num} / 02
+            </span>
+
+            <button
+              type="button"
+              onclick="stepSection4Sub(1)"
+              ${activeSub === 1 ? 'disabled' : ''}
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-paper-ochre bg-paper-ochre text-xs sm:text-sm font-medium text-white hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+            >
+              <span>${t.nextPart}</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render Section 4 (Three Major Modules, Each with Two Sub-Modules)
+     */
+    function renderSection4() {
+      const t = UI[state.lang];
+      document.getElementById('sec4-title').textContent = t.sec4Title;
+      document.getElementById('sec4-mode-btn').textContent = state.sec4ViewAll ? t.toStepView : t.toViewAll;
+
+      const majorWrap = document.getElementById('sec4-major-wrap');
+      const majorTabsEl = document.getElementById('sec4-major-tabs');
+      const contentEl = document.getElementById('sec4-content');
+
+      if (state.sec4ViewAll) {
+        majorWrap.classList.add('hidden');
+        contentEl.innerHTML = `<div class="space-y-6">${buildSec4MajorModuleHTML(0, true)}${buildSec4MajorModuleHTML(1, true)}${buildSec4MajorModuleHTML(2, true)}</div>`;
+      } else {
+        majorWrap.classList.remove('hidden');
+
+        const majors = [
+          { code: '4.1', title: t.sec4Major1 },
+          { code: '4.2', title: t.sec4Major2 },
+          { code: '4.3', title: t.sec4Major3 }
+        ];
+
+        majorTabsEl.innerHTML = majors.map((m, idx) => {
+          const isActive = idx === state.sec4MajorIndex;
+          const btnClasses = isActive
+            ? 'bg-paper-ink text-white border-paper-ink shadow-xs'
+            : 'bg-paper-bg text-paper-ink border-paper-border hover:border-paper-ochre';
+          const codeClasses = isActive
+            ? 'bg-paper-ochre text-white'
+            : 'bg-paper-card text-paper-muted border border-paper-border';
+
+          return `
+            <button
+              type="button"
+              onclick="selectSection4Major(${idx})"
+              aria-pressed="${isActive ? 'true' : 'false'}"
+              class="flex items-center gap-3 text-left px-4 py-3.5 rounded-xl border transition-colors ${btnClasses}"
+            >
+              <span class="inline-flex items-center justify-center px-2 py-0.5 rounded font-mono text-xs font-semibold shrink-0 ${codeClasses}">
+                ${m.code}
+              </span>
+              <span class="text-sm font-bold leading-snug">
+                ${m.title}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = buildSec4MajorModuleHTML(state.sec4MajorIndex, false);
+      }
+
+      typesetMath(contentEl);
+    }
+
+    /**
+     * Render Section 5 (Theoretical Analysis: Convergence & Generalization)
+     */
+    function renderSection5() {
+      const t = UI[state.lang];
+      document.getElementById('sec5-title').textContent = t.sec5Title;
+      document.getElementById('sec5-mode-btn').textContent = state.sec5ViewAll ? t.toStepView : t.toViewAll;
+      document.getElementById('sec5-prev-label').textContent = t.prevPanel;
+      document.getElementById('sec5-next-label').textContent = t.nextPanel;
+
+      const stepperWrap = document.getElementById('sec5-stepper-wrap');
+      const navFooter = document.getElementById('sec5-nav-footer');
+      const contentEl = document.getElementById('sec5-content');
+
+      if (state.sec5ViewAll) {
+        stepperWrap.classList.add('hidden');
+        navFooter.classList.add('hidden');
+        contentEl.innerHTML = `<div class="space-y-4">${buildConvergenceCardHTML(false)}${buildGeneralizationCardHTML(false)}</div>`;
+      } else {
+        stepperWrap.classList.remove('hidden');
+        navFooter.classList.remove('hidden');
+
+        const panels = [
+          { num: '01', title: t.sec5Panel1 },
+          { num: '02', title: t.sec5Panel2 }
+        ];
+
+        const stepperEl = document.getElementById('sec5-stepper');
+        stepperEl.innerHTML = panels.map((p, idx) => {
+          const isActive = idx === state.sec5Index;
+          const cardClasses = isActive
+            ? 'bg-paper-plumTint border-paper-plum text-paper-ink'
+            : 'bg-paper-bg border-paper-border text-paper-muted hover:border-paper-plum/50 hover:text-paper-ink';
+          const badgeClasses = isActive
+            ? 'bg-paper-plum text-white border-paper-plum'
+            : 'bg-paper-card text-paper-muted border-paper-border';
+
+          return `
+            <button
+              type="button"
+              onclick="selectSection5(${idx})"
+              aria-current="${isActive ? 'step' : 'false'}"
+              class="flex items-center gap-2.5 text-left px-3.5 py-2.5 rounded-lg border transition-colors ${cardClasses}"
+            >
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold shrink-0 ${badgeClasses}">
+                ${p.num}
+              </span>
+              <span class="text-xs sm:text-[13px] font-semibold truncate">
+                ${p.title}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        contentEl.innerHTML = state.sec5Index === 0
+          ? buildConvergenceCardHTML(true)
+          : buildGeneralizationCardHTML(true);
+
+        document.getElementById('sec5-counter').textContent = `${panels[state.sec5Index].num} / 02`;
+        document.getElementById('sec5-prev-btn').disabled = state.sec5Index === 0;
+        document.getElementById('sec5-next-btn').disabled = state.sec5Index === 1;
+      }
+
+      typesetMath(contentEl);
+    }
+
+    /**
+     * Render Header & Language Toggle
+     */
+    function renderHeader() {
+      const t = UI[state.lang];
+      document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+      document.getElementById('site-title').textContent = t.siteTitle;
+
+      const zhBtn = document.getElementById('lang-btn-zh');
+      const enBtn = document.getElementById('lang-btn-en');
+
+      if (state.lang === 'zh') {
+        zhBtn.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-paper-bg text-paper-ink border border-paper-border shadow-2xs';
+        enBtn.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium text-paper-muted hover:text-paper-ink border border-transparent';
+      } else {
+        enBtn.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-paper-bg text-paper-ink border border-paper-border shadow-2xs';
+        zhBtn.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium text-paper-muted hover:text-paper-ink border border-transparent';
+      }
+    }
+
+    /**
+     * Full Render
+     */
+    function renderAll() {
+      renderHeader();
+      renderSection1();
+      renderSection2();
+      renderSection3();
+      renderSection4();
+      renderSection5();
+    }
+
+    /**
+     * Interaction Handlers
+     */
+    function setLanguage(lang) {
+      if (state.lang === lang) return;
+      state.lang = lang;
+      renderAll();
+    }
+
+    function selectSection1(idx) {
+      state.lastFocusedSec = 1;
+      state.sec1Index = idx;
+      renderSection1();
+    }
+
+    function stepSection1(delta) {
+      state.lastFocusedSec = 1;
+      const next = state.sec1Index + delta;
+      if (next >= 0 && next < DEFINITIONS.length) {
+        state.sec1Index = next;
+        renderSection1();
+      }
+    }
+
+    function toggleSection1Mode() {
+      state.lastFocusedSec = 1;
+      state.sec1ViewAll = !state.sec1ViewAll;
+      renderSection1();
+    }
+
+    function selectSection2(idx) {
+      state.lastFocusedSec = 2;
+      state.sec2Index = idx;
+      renderSection2();
+    }
+
+    function stepSection2(delta) {
+      state.lastFocusedSec = 2;
+      const next = state.sec2Index + delta;
+      if (next >= 0 && next < INDICATORS.length) {
+        state.sec2Index = next;
+        renderSection2();
+      }
+    }
+
+    function toggleSection2Mode() {
+      state.lastFocusedSec = 2;
+      state.sec2ViewAll = !state.sec2ViewAll;
+      renderSection2();
+    }
+
+    function selectSection3(idx) {
+      state.lastFocusedSec = 3;
+      state.sec3Index = idx;
+      renderSection3();
+    }
+
+    function stepSection3(delta) {
+      state.lastFocusedSec = 3;
+      const next = state.sec3Index + delta;
+      if (next >= 0 && next < SCALARIZATIONS.length) {
+        state.sec3Index = next;
+        renderSection3();
+      }
+    }
+
+    function toggleSection3Mode() {
+      state.lastFocusedSec = 3;
+      state.sec3ViewAll = !state.sec3ViewAll;
+      renderSection3();
+    }
+
+    function selectSection4Major(idx) {
+      state.lastFocusedSec = 4;
+      state.sec4MajorIndex = idx;
+      renderSection4();
+    }
+
+    function selectSection4Sub(majorIdx, subIdx) {
+      state.lastFocusedSec = 4;
+      state.sec4MajorIndex = majorIdx;
+      state.sec4SubIndex[majorIdx] = subIdx;
+      renderSection4();
+    }
+
+    function stepSection4Sub(delta) {
+      state.lastFocusedSec = 4;
+      const mIdx = state.sec4MajorIndex;
+      const next = state.sec4SubIndex[mIdx] + delta;
+      if (next >= 0 && next <= 1) {
+        state.sec4SubIndex[mIdx] = next;
+        renderSection4();
+      }
+    }
+
+    function toggleSection4Mode() {
+      state.lastFocusedSec = 4;
+      state.sec4ViewAll = !state.sec4ViewAll;
+      renderSection4();
+    }
+
+    function setSec4FilterA(filter) {
+      state.lastFocusedSec = 4;
+      state.sec4FilterA = filter;
+      renderSection4();
+    }
+
+    function setSec4FilterB(filter) {
+      state.lastFocusedSec = 4;
+      state.sec4FilterB = filter;
+      renderSection4();
+    }
+
+    function selectSection5(idx) {
+      state.lastFocusedSec = 5;
+      state.sec5Index = idx;
+      renderSection5();
+    }
+
+    function stepSection5(delta) {
+      state.lastFocusedSec = 5;
+      const next = state.sec5Index + delta;
+      if (next >= 0 && next <= 1) {
+        state.sec5Index = next;
+        renderSection5();
+      }
+    }
+
+    function toggleSection5Mode() {
+      state.lastFocusedSec = 5;
+      state.sec5ViewAll = !state.sec5ViewAll;
+      renderSection5();
+    }
+
+    /**
+     * Track focused section & enable Left/Right keyboard navigation
+     */
+    [1, 2, 3, 4, 5].forEach((secNum) => {
+      const el = document.getElementById(`section-${secNum}`);
+      if (el) {
+        el.addEventListener('focusin', () => { state.lastFocusedSec = secNum; });
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const delta = e.key === 'ArrowRight' ? 1 : -1;
+
+      if (state.lastFocusedSec === 1 && !state.sec1ViewAll) {
+        stepSection1(delta);
+      } else if (state.lastFocusedSec === 2 && !state.sec2ViewAll) {
+        stepSection2(delta);
+      } else if (state.lastFocusedSec === 3 && !state.sec3ViewAll) {
+        stepSection3(delta);
+      } else if (state.lastFocusedSec === 4 && !state.sec4ViewAll) {
+        stepSection4Sub(delta);
+      } else if (state.lastFocusedSec === 5 && !state.sec5ViewAll) {
+        stepSection5(delta);
+      }
+    });
+
+    /**
+     * Ensure KaTeX renders immediately once script finishes loading
+     */
+    function onKatexReady() {
+      typesetMath(document.body);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+      typesetMath(document.body);
+    });
+  </script>
+</body>
+</html>
